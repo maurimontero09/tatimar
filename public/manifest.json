@@ -1,0 +1,31 @@
+{
+  "name": "Tatimar Operations",
+  "short_name": "Tatimar",
+  "description": "Tatimar Cleaning Operations Platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1e35",
+  "theme_color": "#0f1e35",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "My Schedule",
+      "url": "/cleaner",
+      "description": "View today's jobs"
+    }
+  ]
+}

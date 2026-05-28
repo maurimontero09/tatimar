@@ -1,0 +1,303 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── ENUMS ────────────────────────────────────────
+
+enum Role {
+  SUPER_ADMIN
+  MANAGER
+  ACCOUNTANT
+  CLEANER
+}
+
+enum ScheduleStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum AssignmentStatus {
+  ASSIGNED
+  ACCEPTED
+  DECLINED
+  COMPLETED
+}
+
+enum ClockType {
+  CLOCK_IN
+  CLOCK_OUT
+}
+
+enum SyncDirection {
+  NOTION_TO_DB
+  DB_TO_NOTION
+}
+
+enum SyncStatus {
+  SUCCESS
+  ERROR
+  PENDING
+}
+
+// ─── USERS ────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  role          Role      @default(CLEANER)
+  passwordHash  String?
+  notionUserId  String?   @unique
+  phone         String?
+  avatarUrl     String?
+  isActive      Boolean   @default(true)
+  mfaSecret     String?
+  mfaEnabled    Boolean   @default(false)
+  pushTokens    String[]  @default([])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  assignments    ScheduleAssignment[]
+  clockEvents    ClockEvent[]
+  certifications UserCertification[]
+  completionPhotos CompletionPhoto[]
+  sessions       Session[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+// ─── CLIENTS ──────────────────────────────────────
+
+model Client {
+  id            String   @id @default(cuid())
+  name          String
+  notionPageId  String?  @unique
+  type          String?  // "commercial", "medical", "residential", etc.
+  address       String
+  city          String?
+  province      String?  @default("QC")
+  postalCode    String?
+  lat           Float?
+  lng           Float?
+  accessNotes   String?
+  contactName   String?
+  contactPhone  String?
+  contactEmail  String?
+  billingEmail  String?
+  frequency     String?  // "daily", "weekly", "2x_week", etc.
+  isActive      Boolean  @default(true)
+  notionSyncedAt DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  schedules Schedule[]
+  locations Location[]
+
+  @@map("clients")
+}
+
+model Location {
+  id        String  @id @default(cuid())
+  clientId  String
+  name      String  // "Main Floor", "Suite 400", etc.
+  address   String
+  lat       Float?
+  lng       Float?
+  notes     String?
+  isActive  Boolean @default(true)
+
+  client    Client @relation(fields: [clientId], references: [id])
+  schedules Schedule[]
+
+  @@map("locations")
+}
+
+// ─── SCHEDULES ────────────────────────────────────
+
+model Schedule {
+  id              String         @id @default(cuid())
+  notionPageId    String?        @unique
+  clientId        String
+  locationId      String?
+  date            DateTime       @db.Date
+  startTime       DateTime
+  endTime         DateTime?
+  maxHours        Float          @default(3)
+  status          ScheduleStatus @default(PENDING)
+  projectLeadId   String?
+  servicesList    String[]       @default([])
+  instructions    String?
+  accessNotes     String?
+  notes           String?
+  isRecurring     Boolean        @default(false)
+  recurringRule   String?        // RRULE string (e.g. "FREQ=WEEKLY;BYDAY=MO,WE,FR")
+  recurringParentId String?
+  notionSyncedAt  DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  client       Client   @relation(fields: [clientId], references: [id])
+  location     Location? @relation(fields: [locationId], references: [id])
+
+  assignments      ScheduleAssignment[]
+  clockEvents      ClockEvent[]
+  completionPhotos CompletionPhoto[]
+
+  @@index([date])
+  @@index([status])
+  @@index([clientId])
+  @@map("schedules")
+}
+
+model ScheduleAssignment {
+  id         String           @id @default(cuid())
+  scheduleId String
+  userId     String
+  status     AssignmentStatus @default(ASSIGNED)
+  notifiedAt DateTime?
+  createdAt  DateTime         @default(now())
+
+  schedule Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@unique([scheduleId, userId])
+  @@map("schedule_assignments")
+}
+
+// ─── CLOCK EVENTS ─────────────────────────────────
+
+model ClockEvent {
+  id         String    @id @default(cuid())
+  userId     String
+  scheduleId String
+  type       ClockType
+  timestamp  DateTime  @default(now())
+  lat        Float?
+  lng        Float?
+  accuracy   Float?    // GPS accuracy in meters
+  notes      String?
+
+  user     User     @relation(fields: [userId], references: [id])
+  schedule Schedule @relation(fields: [scheduleId], references: [id])
+
+  @@index([userId, scheduleId])
+  @@map("clock_events")
+}
+
+// ─── CERTIFICATIONS ───────────────────────────────
+
+model Certification {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  validityDays Int?   // how many days it's valid for (e.g. 730 = 2 years)
+  isRequired  Boolean @default(false)
+  notionPageId String? @unique
+
+  userCertifications UserCertification[]
+
+  @@map("certifications")
+}
+
+model UserCertification {
+  id              String    @id @default(cuid())
+  userId          String
+  certificationId String
+  issuedAt        DateTime
+  expiresAt       DateTime?
+  documentUrl     String?   // signed R2 URL
+  documentKey     String?   // R2 object key
+  notionPageId    String?   @unique
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user          User          @relation(fields: [userId], references: [id])
+  certification Certification @relation(fields: [certificationId], references: [id])
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("user_certifications")
+}
+
+// ─── FILES ────────────────────────────────────────
+
+model CompletionPhoto {
+  id          String   @id @default(cuid())
+  scheduleId  String
+  uploadedBy  String
+  url         String   // public signed URL
+  key         String   // R2 object key
+  caption     String?
+  createdAt   DateTime @default(now())
+
+  schedule Schedule @relation(fields: [scheduleId], references: [id])
+  uploader User     @relation(fields: [uploadedBy], references: [id])
+
+  @@map("completion_photos")
+}
+
+// ─── PRODUCTS ─────────────────────────────────────
+
+model Product {
+  id           String  @id @default(cuid())
+  name         String
+  description  String?
+  sku          String? @unique
+  unit         String? // "bottle", "bag", "roll"
+  notionPageId String? @unique
+  isActive     Boolean @default(true)
+
+  @@map("products")
+}
+
+// ─── NOTIFICATIONS ────────────────────────────────
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, endpoint])
+  @@map("push_subscriptions")
+}
+
+// ─── NOTION SYNC LOG ──────────────────────────────
+
+model NotionSyncLog {
+  id          String        @id @default(cuid())
+  entity      String        // "schedule" | "client" | "user" | "certification"
+  entityId    String?
+  notionId    String?
+  action      String        // "created" | "updated" | "deleted"
+  direction   SyncDirection
+  status      SyncStatus
+  error       String?
+  metadata    Json?
+  createdAt   DateTime      @default(now())
+
+  @@index([entity, createdAt])
+  @@index([status])
+  @@map("notion_sync_logs")
+}

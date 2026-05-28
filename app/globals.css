@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --navy:        #0f1e35;
+    --navy-80:     #1a2f4a;
+    --navy-60:     #243f61;
+    --blue:        #1d6fca;
+    --blue-lt:     #3d8de0;
+    --blue-pale:   #e8f2fd;
+    --teal:        #0e9e72;
+    --teal-lt:     #12b884;
+    --teal-pale:   #e0f5ee;
+    --amber:       #c07820;
+    --amber-pale:  #fdf2dc;
+    --red:         #c0392b;
+    --red-pale:    #fcecea;
+    --slate:       #f2f5f9;
+    --border:      #dce4ef;
+  }
+
+  * {
+    @apply box-border;
+  }
+
+  html, body {
+    @apply h-full;
+  }
+
+  body {
+    font-family: var(--font-sans), system-ui, sans-serif;
+    @apply text-sm antialiased;
+    color: var(--navy);
+    background: var(--slate);
+  }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+}
+
+@layer components {
+  .card {
+    @apply bg-white rounded-xl border border-[var(--border)] shadow-sm overflow-hidden;
+  }
+
+  .btn {
+    @apply inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer;
+  }
+
+  .btn-primary {
+    @apply bg-[var(--blue)] text-white hover:bg-[var(--blue-lt)];
+  }
+
+  .btn-secondary {
+    @apply bg-white text-[var(--navy)] border border-[var(--border)] hover:bg-[var(--slate)];
+  }
+
+  .btn-teal {
+    @apply bg-[var(--teal)] text-white hover:bg-[var(--teal-lt)];
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .form-input {
+    @apply w-full px-3 py-2 border border-[var(--border)] rounded-lg text-sm outline-none
+           transition-all focus:border-[var(--blue)] focus:ring-2 focus:ring-[var(--blue)] focus:ring-opacity-10;
+  }
+
+  .nav-item {
+    @apply flex items-center gap-2 px-2.5 py-1.5 rounded-md
+           text-white/55 text-[13px] cursor-pointer transition-all
+           hover:bg-white/10 hover:text-white/80;
+  }
+
+  .nav-item.active {
+    @apply bg-blue-600/25 text-white font-medium;
+  }
+}
