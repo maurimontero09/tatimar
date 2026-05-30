@@ -49,7 +49,7 @@ export default async function EmployeesPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {employees.map((emp, i) => (
           <EmployeeCard key={emp.id} employee={emp} colorClass={BG_COLORS[i % BG_COLORS.length]} />
         ))}

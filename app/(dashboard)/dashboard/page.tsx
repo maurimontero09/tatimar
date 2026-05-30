@@ -49,7 +49,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4 mb-5">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-5">
         {[
           { label: 'Jobs Today',      value: todaySchedules.length, icon: '📅', change: `${inProgress} in progress` },
           { label: 'Completed',       value: completed, icon: '✓', change: `${Math.round(completed/todaySchedules.length*100)||0}% rate` },
@@ -65,7 +65,7 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex flex-col xl:flex-row gap-4">
         {/* Jobs table */}
         <div className="flex-1 min-w-0 bg-white rounded-xl border border-[var(--border)] shadow-sm overflow-hidden">
           <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
@@ -129,7 +129,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Cert alerts sidebar */}
-        <div className="w-64 shrink-0">
+        <div className="w-full xl:w-64 xl:shrink-0">
           <div className="bg-white rounded-xl border border-[var(--border)] shadow-sm overflow-hidden">
             <div className="px-4 py-3 border-b border-gray-100">
               <div className="font-semibold text-sm">⚠️ Cert Alerts</div>

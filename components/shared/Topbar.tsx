@@ -23,9 +23,9 @@ export function Topbar({ user, onMenuClick }: TopbarProps) {
         aria-label="Toggle menu"
       >
         <span className="flex flex-col gap-1.5">
-          <span className="block w-4.5 h-0.5 bg-current rounded" />
-          <span className="block w-4.5 h-0.5 bg-current rounded" />
-          <span className="block w-4.5 h-0.5 bg-current rounded" />
+          <span className="block w-[18px] h-0.5 bg-current rounded" />
+          <span className="block w-[18px] h-0.5 bg-current rounded" />
+          <span className="block w-[18px] h-0.5 bg-current rounded" />
         </span>
       </button>
       {/* Search */}
