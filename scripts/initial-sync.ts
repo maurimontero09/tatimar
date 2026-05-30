@@ -13,6 +13,10 @@ async function main() {
   console.log('')
 
   try {
+    console.log('→ Syncing users...')
+    await syncEngine.syncUsers()
+    console.log('  ✓ Users synced')
+
     console.log('→ Syncing clients...')
     await syncEngine.syncClients()
     console.log('  ✓ Clients synced')
@@ -21,13 +25,15 @@ async function main() {
     await syncEngine.syncSchedules()
     console.log('  ✓ Schedules synced')
 
-    const [clientCount, scheduleCount] = await Promise.all([
+    const [userCount, clientCount, scheduleCount] = await Promise.all([
+      prisma.user.count(),
       prisma.client.count(),
       prisma.schedule.count(),
     ])
 
     console.log('')
     console.log('✅ Initial sync complete!')
+    console.log(`   Users:     ${userCount}`)
     console.log(`   Clients:   ${clientCount}`)
     console.log(`   Schedules: ${scheduleCount}`)
     console.log('')

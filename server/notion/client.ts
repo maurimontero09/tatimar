@@ -102,3 +102,13 @@ export function getRelation(page: PageObjectResponse, prop: string): string[] {
   if (p?.type === 'relation') return p.relation.map(r => r.id)
   return []
 }
+
+export function getFormula(page: PageObjectResponse, prop: string): string | null {
+  const p = page.properties[prop]
+  if (p?.type !== 'formula') return null
+  const f = p.formula
+  if (f.type === 'string')  return f.string  ?? null
+  if (f.type === 'number')  return f.number != null ? String(f.number) : null
+  if (f.type === 'boolean') return String(f.boolean)
+  return null
+}

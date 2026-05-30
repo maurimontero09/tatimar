@@ -19,8 +19,13 @@ export default auth((req: NextRequest & { auth: { user?: { role?: string } } | n
   const { pathname } = req.nextUrl
   const session = req.auth
 
-  // Public routes
-  if (pathname.startsWith('/login') || pathname.startsWith('/api/auth')) {
+  // Always allow auth API routes through (sign-out, CSRF, callbacks, etc.)
+  if (pathname.startsWith('/api/auth')) {
+    return NextResponse.next()
+  }
+
+  // Redirect logged-in users away from the login page
+  if (pathname.startsWith('/login')) {
     if (session?.user) return NextResponse.redirect(new URL('/dashboard', req.url))
     return NextResponse.next()
   }

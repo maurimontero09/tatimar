@@ -1,8 +1,10 @@
 import { notion, NOTION_DBS, queryAll } from './client'
 import { scheduleMapper } from './mappers/schedule.mapper'
 import { clientMapper }   from './mappers/client.mapper'
+import { userMapper }     from './mappers/user.mapper'
 import { prisma }         from '@/server/db/client'
 import { Redis }          from '@upstash/redis'
+import bcrypt             from 'bcryptjs'
 
 const redis = new Redis({
   url:   process.env.UPSTASH_REDIS_REST_URL!,
@@ -20,6 +22,7 @@ export class NotionSyncEngine {
     const results = await Promise.allSettled([
       this.syncSchedules(),
       this.syncClients(),
+      this.syncUsers(),
     ])
 
     for (const result of results) {
@@ -33,7 +36,7 @@ export class NotionSyncEngine {
     const lastSync = await redis.get<string>(SYNC_KEY('schedules'))
     const pages    = await queryAll(NOTION_DBS.schedules, undefined, lastSync ?? undefined)
 
-    let created = 0, updated = 0, errors = 0
+    let created = 0, errors = 0
 
     for (const page of pages) {
       try {
@@ -93,6 +96,59 @@ export class NotionSyncEngine {
     }
 
     await redis.set(SYNC_KEY('clients'), new Date().toISOString())
+  }
+
+  async syncUsers() {
+    const lastSync = await redis.get<string>(SYNC_KEY('users'))
+    const pages    = await queryAll(NOTION_DBS.users, undefined, lastSync ?? undefined)
+
+    let upserted = 0, skipped = 0, errors = 0
+
+    for (const page of pages) {
+      try {
+        const model = userMapper.toModel(page)
+        if (!model) { skipped++; continue }
+
+        const passwordHash = model.password
+          ? await bcrypt.hash(model.password, 10)
+          : undefined
+
+        const existing = await prisma.user.findUnique({
+          where: { notionUserId: model.notionUserId },
+        })
+
+        if (existing) {
+          // Update name; only update password if it changed in Notion
+          await prisma.user.update({
+            where: { id: existing.id },
+            data: {
+              name:  model.name,
+              email: model.email,
+              ...(passwordHash && { passwordHash }),
+            },
+          })
+        } else {
+          await prisma.user.create({
+            data: {
+              email:        model.email,
+              name:         model.name,
+              notionUserId: model.notionUserId,
+              passwordHash: passwordHash ?? '',
+              role:         'CLEANER',
+              isActive:     true,
+            },
+          })
+        }
+
+        upserted++
+      } catch (err) {
+        errors++
+        console.error('[NotionSync] user error:', err)
+      }
+    }
+
+    await redis.set(SYNC_KEY('users'), new Date().toISOString())
+    console.log(`[NotionSync] users: ${upserted} upserted, ${skipped} skipped, ${errors} errors`)
   }
 
   /**

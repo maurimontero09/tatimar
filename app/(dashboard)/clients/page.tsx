@@ -1,6 +1,7 @@
 import { auth } from '@/server/auth/config'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/server/db/client'
+import { NewClientModal } from '@/components/clients/NewClientModal'
 
 const FREQUENCY_LABELS: Record<string, string> = {
   daily:   'Daily',
@@ -44,7 +45,7 @@ export default async function ClientsPage() {
             <input type="text" placeholder="Search clients…"
                    className="bg-transparent border-none outline-none text-sm w-full" />
           </div>
-          <button className="btn btn-primary text-sm">+ New Client</button>
+          <NewClientModal />
         </div>
       </div>
 
@@ -63,8 +64,7 @@ export default async function ClientsPage() {
             </thead>
             <tbody>
               {clients.map(client => {
-                const lastSched  = client.schedules[0]
-                const assignee   = lastSched?.assignments[0]?.user
+                const lastSched   = client.schedules[0]
                 const lastJobDate = lastSched?.date
 
                 return (

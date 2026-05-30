@@ -134,6 +134,33 @@ export const scheduleRouter = createTRPCRouter({
       return schedule
     }),
 
+  // Upcoming PENDING schedules (for assign modal)
+  upcoming: managerProcedure
+    .input(z.object({ days: z.number().default(30) }))
+    .query(async ({ ctx, input }) => {
+      const from = new Date()
+      const to   = new Date(Date.now() + input.days * 24 * 60 * 60 * 1000)
+      return ctx.prisma.schedule.findMany({
+        where: { date: { gte: from, lte: to }, status: 'PENDING' },
+        include: { client: true, assignments: { include: { user: true } } },
+        orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
+      })
+    }),
+
+  // Add a cleaner to an existing schedule
+  assign: managerProcedure
+    .input(z.object({ scheduleId: z.string(), userId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const existing = await ctx.prisma.scheduleAssignment.findUnique({
+        where: { scheduleId_userId: { scheduleId: input.scheduleId, userId: input.userId } },
+      })
+      if (existing) throw new TRPCError({ code: 'CONFLICT', message: 'Already assigned to this job' })
+
+      return ctx.prisma.scheduleAssignment.create({
+        data: { scheduleId: input.scheduleId, userId: input.userId },
+      })
+    }),
+
   // Mark complete (cleaner)
   markComplete: protectedProcedure
     .input(z.object({ id: z.string() }))

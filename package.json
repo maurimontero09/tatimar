@@ -12,7 +12,8 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
-    "notion:sync": "tsx scripts/initial-sync.ts",
+    "notion:sync": "node --env-file=.env.local --import=tsx scripts/initial-sync.ts",
+    "users:import": "node --env-file=.env.local --import=tsx scripts/import-users.ts",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
