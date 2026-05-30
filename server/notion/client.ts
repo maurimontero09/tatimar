@@ -5,10 +5,10 @@ import type {
 } from '@notionhq/client/build/src/api-endpoints'
 
 if (!process.env.NOTION_TOKEN) {
-  throw new Error('NOTION_TOKEN environment variable is required')
+  console.warn('[Notion] NOTION_TOKEN is not set — Notion features will be unavailable')
 }
 
-export const notion = new Client({ auth: process.env.NOTION_TOKEN })
+export const notion = new Client({ auth: process.env.NOTION_TOKEN ?? '' })
 
 // ─── Database IDs ─────────────────────────────────
 export const NOTION_DBS = {
