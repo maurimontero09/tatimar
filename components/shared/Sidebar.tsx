@@ -47,7 +47,7 @@ export function Sidebar({ role, user }: SidebarProps) {
   }
 
   return (
-    <nav className="w-[230px] flex-shrink-0 flex flex-col overflow-y-auto"
+    <nav className="w-[230px] h-full flex-shrink-0 flex flex-col overflow-y-auto"
          style={{ background: 'var(--navy)' }}>
 
       {/* Logo */}

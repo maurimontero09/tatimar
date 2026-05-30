@@ -22,15 +22,15 @@ export default async function SchedulePage() {
         clockEvents: true,
       },
       orderBy: { startTime: 'asc' },
-    }),
+    }).catch(() => []),
     prisma.user.findMany({
       where: { role: 'CLEANER', isActive: true },
       orderBy: { name: 'asc' },
-    }),
+    }).catch(() => []),
     prisma.client.findMany({
       where: { isActive: true },
       orderBy: { name: 'asc' },
-    }),
+    }).catch(() => []),
   ])
 
   return (

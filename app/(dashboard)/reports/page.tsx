@@ -22,7 +22,7 @@ export default async function ReportsPage() {
         <p className="text-sm text-gray-400">Generate and export operational reports</p>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
         {REPORTS.map(r => (
           <div key={r.title}
                className="bg-white rounded-xl border border-[var(--border)] shadow-sm

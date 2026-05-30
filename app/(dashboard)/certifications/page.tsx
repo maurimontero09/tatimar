@@ -18,8 +18,8 @@ export default async function CertificationsPage() {
         certification: true,
       },
       orderBy: { expiresAt: 'asc' },
-    }),
-    prisma.certification.findMany({ orderBy: { name: 'asc' } }),
+    }).catch(() => []),
+    prisma.certification.findMany({ orderBy: { name: 'asc' } }).catch(() => []),
   ])
 
   const valid    = userCerts.filter(c => !c.expiresAt || getDaysUntilExpiry(c.expiresAt) > 60)
@@ -37,7 +37,7 @@ export default async function CertificationsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
         <div className="bg-white rounded-xl border-l-4 border-l-green-500 border border-[var(--border)] p-4 shadow-sm">
           <div className="text-[11px] font-medium text-gray-400 uppercase tracking-wide mb-1">Valid</div>
           <div className="text-3xl font-semibold text-green-600">{valid.length}</div>
