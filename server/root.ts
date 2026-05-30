@@ -9,7 +9,7 @@ export const appRouter = createTRPCRouter({
   schedule:      scheduleRouter,
   clock:         clockRouter,
   user:          userRouter,
-  client:        clientRouter,
+  clients:       clientRouter,
   certification: certificationRouter,
 })
 

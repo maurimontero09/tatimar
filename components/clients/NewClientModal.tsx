@@ -101,7 +101,7 @@ export function NewClientModal() {
   const [form, setForm] = useState(EMPTY)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const create = trpc.client.create.useMutation({
+  const create = trpc.clients.create.useMutation({
     onSuccess: () => {
       setOpen(false)
       setForm(EMPTY)
