@@ -23,7 +23,7 @@ export default function LoginPage() {
     })
 
     if (result?.error) {
-      setError('Invalid email or password')
+      setError(`Error: ${result.error}`)
       setLoading(false)
       return
     }
