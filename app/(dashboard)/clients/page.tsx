@@ -31,7 +31,7 @@ export default async function ClientsPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-5">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-5">
         <div>
           <h1 className="text-xl font-semibold">Clients</h1>
           <p className="text-sm text-gray-400">
@@ -40,7 +40,7 @@ export default async function ClientsPage() {
         </div>
         <div className="flex gap-2">
           <div className="flex items-center gap-2 bg-gray-50 border border-[var(--border)]
-                          rounded-lg px-3 py-1.5 w-48">
+                          rounded-lg px-3 py-1.5 flex-1 sm:w-48 sm:flex-none">
             <span className="text-gray-400 text-sm">🔍</span>
             <input type="text" placeholder="Search clients…"
                    className="bg-transparent border-none outline-none text-sm w-full" />

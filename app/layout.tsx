@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { DM_Sans, DM_Mono } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
@@ -20,7 +20,12 @@ export const metadata: Metadata = {
   title: 'Tatimar — Operations Platform',
   description: 'Cleaning operations management for Tatimar',
   manifest: '/manifest.json',
+}
+
+export const viewport: Viewport = {
   themeColor: '#0f1e35',
+  width: 'device-width',
+  initialScale: 1,
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

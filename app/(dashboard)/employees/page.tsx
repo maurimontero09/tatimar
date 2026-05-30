@@ -31,7 +31,7 @@ export default async function EmployeesPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-5">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-5">
         <div>
           <h1 className="text-xl font-semibold">Employees</h1>
           <p className="text-sm text-gray-400">

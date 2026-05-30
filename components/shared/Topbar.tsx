@@ -28,8 +28,8 @@ export function Topbar({ user, onMenuClick }: TopbarProps) {
           <span className="block w-[18px] h-0.5 bg-current rounded" />
         </span>
       </button>
-      {/* Search */}
-      <div className="flex items-center gap-2 bg-[var(--slate)] border border-[var(--border)]
+      {/* Search — hidden on mobile */}
+      <div className="hidden sm:flex items-center gap-2 bg-[var(--slate)] border border-[var(--border)]
                       rounded-lg px-3 py-1.5 w-56 focus-within:border-[var(--blue)]
                       focus-within:bg-white transition-all">
         <Search size={14} className="text-[var(--text-3)] shrink-0" style={{ color: 'var(--text-3)' }} />

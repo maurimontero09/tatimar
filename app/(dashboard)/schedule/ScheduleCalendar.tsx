@@ -69,14 +69,14 @@ export function ScheduleCalendar({ schedules, cleaners, clients, weekStart }: Pr
   return (
     <div>
       {/* Header */}
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
         <div>
           <h1 className="text-xl font-semibold">Schedule</h1>
           <p className="text-sm text-gray-400">
             Week of {format(parseISO(weekStart), 'MMMM d')} – {format(addDays(parseISO(weekStart), 4), 'd, yyyy')}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button className="btn btn-secondary text-sm">← Prev</button>
           <button className="btn btn-secondary text-sm"
                   style={{ background: 'var(--blue-pale)', color: 'var(--blue)', borderColor: 'var(--blue-pale)' }}>
@@ -103,8 +103,8 @@ export function ScheduleCalendar({ schedules, cleaners, clients, weekStart }: Pr
         ))}
       </div>
 
-      {/* Calendar grid */}
-      <div className="bg-white rounded-xl border border-[var(--border)] shadow-sm overflow-hidden">
+      {/* Calendar grid — horizontally scrollable on mobile */}
+      <div className="bg-white rounded-xl border border-[var(--border)] shadow-sm overflow-x-auto">
         {/* Day headers */}
         <div className="grid border-b border-gray-100"
              style={{ gridTemplateColumns: '52px repeat(5, 1fr)' }}>
@@ -178,7 +178,7 @@ export function ScheduleCalendar({ schedules, cleaners, clients, weekStart }: Pr
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
              onClick={e => e.target === e.currentTarget && setShowModal(false)}>
-          <div className="bg-white rounded-2xl shadow-xl w-[520px] max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
               <span className="text-xl">📅</span>
               <div>
@@ -190,7 +190,7 @@ export function ScheduleCalendar({ schedules, cleaners, clients, weekStart }: Pr
             </div>
 
             <div className="px-6 py-5 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1.5">Client *</label>
                   <select className="form-input" value={form.clientId}
@@ -291,7 +291,7 @@ export function ScheduleCalendar({ schedules, cleaners, clients, weekStart }: Pr
       {selectedSchedule && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
              onClick={e => e.target === e.currentTarget && setSelectedSchedule(null)}>
-          <div className="bg-white rounded-2xl shadow-xl w-[480px] max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
               <span className="text-xl">🧹</span>
               <div>
