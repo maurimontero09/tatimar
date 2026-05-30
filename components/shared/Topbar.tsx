@@ -7,13 +7,27 @@ import type { Role } from '@prisma/client'
 
 interface TopbarProps {
   user: { name: string; role: Role }
+  onMenuClick?: () => void
 }
 
-export function Topbar({ user }: TopbarProps) {
+export function Topbar({ user, onMenuClick }: TopbarProps) {
   const [search, setSearch] = useState('')
 
   return (
-    <header className="h-14 bg-white border-b border-[var(--border)] flex items-center px-6 gap-4 shrink-0">
+    <header className="h-14 bg-white border-b border-[var(--border)] flex items-center px-4 lg:px-6 gap-3 shrink-0">
+      {/* Hamburger — mobile only */}
+      <button
+        className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-gray-500
+                   hover:bg-gray-100 transition-colors shrink-0"
+        onClick={onMenuClick}
+        aria-label="Toggle menu"
+      >
+        <span className="flex flex-col gap-1.5">
+          <span className="block w-4.5 h-0.5 bg-current rounded" />
+          <span className="block w-4.5 h-0.5 bg-current rounded" />
+          <span className="block w-4.5 h-0.5 bg-current rounded" />
+        </span>
+      </button>
       {/* Search */}
       <div className="flex items-center gap-2 bg-[var(--slate)] border border-[var(--border)]
                       rounded-lg px-3 py-1.5 w-56 focus-within:border-[var(--blue)]
