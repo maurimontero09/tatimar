@@ -3,15 +3,29 @@ import { scheduleMapper } from './mappers/schedule.mapper'
 import { clientMapper }   from './mappers/client.mapper'
 import { userMapper }     from './mappers/user.mapper'
 import { prisma }         from '@/server/db/client'
-import { Redis }          from '@upstash/redis'
 import bcrypt             from 'bcryptjs'
 
-const redis = new Redis({
-  url:   process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-})
-
 const SYNC_KEY = (db: string) => `notion:last_sync:${db}`
+
+// Redis is optional — returns null stubs when not configured
+async function getRedis() {
+  if (!process.env.UPSTASH_REDIS_REST_URL) return null
+  const { Redis } = await import('@upstash/redis')
+  return new Redis({
+    url:   process.env.UPSTASH_REDIS_REST_URL,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+  })
+}
+
+async function getLastSync(key: string): Promise<string | null> {
+  const redis = await getRedis()
+  return redis ? redis.get<string>(key) : null
+}
+
+async function setLastSync(key: string): Promise<void> {
+  const redis = await getRedis()
+  if (redis) await redis.set(key, new Date().toISOString())
+}
 
 export class NotionSyncEngine {
   /**
@@ -33,7 +47,7 @@ export class NotionSyncEngine {
   }
 
   async syncSchedules() {
-    const lastSync = await redis.get<string>(SYNC_KEY('schedules'))
+    const lastSync = await getLastSync(SYNC_KEY('schedules'))
     const pages    = await queryAll(NOTION_DBS.schedules, undefined, lastSync ?? undefined)
 
     let created = 0, errors = 0
@@ -74,12 +88,12 @@ export class NotionSyncEngine {
       }
     }
 
-    await redis.set(SYNC_KEY('schedules'), new Date().toISOString())
+    await setLastSync(SYNC_KEY('schedules'))
     console.log(`[NotionSync] schedules: ${created} upserted, ${errors} errors`)
   }
 
   async syncClients() {
-    const lastSync = await redis.get<string>(SYNC_KEY('clients'))
+    const lastSync = await getLastSync(SYNC_KEY('clients'))
     const pages    = await queryAll(NOTION_DBS.clients, undefined, lastSync ?? undefined)
 
     for (const page of pages) {
@@ -95,11 +109,11 @@ export class NotionSyncEngine {
       }
     }
 
-    await redis.set(SYNC_KEY('clients'), new Date().toISOString())
+    await setLastSync(SYNC_KEY('clients'))
   }
 
   async syncUsers() {
-    const lastSync = await redis.get<string>(SYNC_KEY('users'))
+    const lastSync = await getLastSync(SYNC_KEY('users'))
     const pages    = await queryAll(NOTION_DBS.users, undefined, lastSync ?? undefined)
 
     let upserted = 0, skipped = 0, errors = 0
@@ -147,7 +161,7 @@ export class NotionSyncEngine {
       }
     }
 
-    await redis.set(SYNC_KEY('users'), new Date().toISOString())
+    await setLastSync(SYNC_KEY('users'))
     console.log(`[NotionSync] users: ${upserted} upserted, ${skipped} skipped, ${errors} errors`)
   }
 

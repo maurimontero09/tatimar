@@ -1,49 +1,68 @@
-import Bull from 'bull'
-import { syncEngine } from '@/server/notion/sync-engine'
+import type Bull from 'bull'
 
-const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL?.replace('https://', 'rediss://') ?? 'redis://localhost:6379'
+// Redis is optional — if not configured, queue operations are no-ops
+const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL?.replace('https://', 'rediss://')
 
-// Queue for outbound writes (app → Notion)
-export const notionSyncQueue = new Bull('notion-sync', {
-  redis: REDIS_URL,
-  defaultJobOptions: {
-    attempts: 5,
-    backoff: { type: 'exponential', delay: 2000 },
-    removeOnComplete: 100,
-    removeOnFail: 50,
-  },
-})
+type QueueStub = Pick<Bull.Queue, 'add' | 'process' | 'on' | 'getRepeatableJobs'>
 
-// Queue for inbound polling (Notion → app)
-export const notionPollQueue = new Bull('notion-poll', {
-  redis: REDIS_URL,
-})
-
-// ─── Write-back worker ────────────────────────────
-notionSyncQueue.process('write-schedule', async (job) => {
-  const { data } = job.data as { action: string; entity: string; data: { id: string } }
-  await syncEngine.writeScheduleToNotion(data.id)
-})
-
-notionSyncQueue.process('write-client', async (_job) => {
-  // client write-back would go here
-})
-
-// ─── Poll worker (runs on a repeating schedule) ───
-notionPollQueue.process('poll', async () => {
-  await syncEngine.syncAll()
-})
-
-// Register the repeating poll job (every 60 seconds)
-export async function startPolling() {
-  const existing = await notionPollQueue.getRepeatableJobs()
-  if (existing.length === 0) {
-    await notionPollQueue.add('poll', {}, { repeat: { every: 60_000 } })
-    console.log('[NotionPoll] Started polling every 60s')
+function makeStub(): QueueStub {
+  return {
+    add:               async () => ({} as any),
+    process:           (() => {}) as any,
+    on:                (() => {}) as any,
+    getRepeatableJobs: async () => [],
   }
 }
 
-// Error logging
-notionSyncQueue.on('failed', (job, err) => {
-  console.error(`[NotionSync] Job ${job.id} failed:`, err.message)
-})
+async function makeQueue(name: string, opts?: object): Promise<QueueStub> {
+  if (!REDIS_URL) return makeStub()
+  const Bull = (await import('bull')).default
+  return new Bull(name, { redis: REDIS_URL, ...opts })
+}
+
+// Queues are initialized lazily to avoid crashing at build/import time
+let _syncQueue:  QueueStub | null = null
+let _pollQueue:  QueueStub | null = null
+
+async function getSyncQueue(): Promise<QueueStub> {
+  if (!_syncQueue) {
+    _syncQueue = await makeQueue('notion-sync', {
+      defaultJobOptions: {
+        attempts:         5,
+        backoff:          { type: 'exponential', delay: 2000 },
+        removeOnComplete: 100,
+        removeOnFail:     50,
+      },
+    })
+  }
+  return _syncQueue
+}
+
+async function getPollQueue(): Promise<QueueStub> {
+  if (!_pollQueue) _pollQueue = await makeQueue('notion-poll')
+  return _pollQueue
+}
+
+// ─── Public API ───────────────────────────────────────────────────────────────
+
+export const notionSyncQueue = {
+  add: async (name: string, data: object) => {
+    const q = await getSyncQueue()
+    return q.add(name, data)
+  },
+}
+
+export async function startPolling() {
+  if (!REDIS_URL) {
+    console.warn('[NotionPoll] Redis not configured, polling disabled')
+    return
+  }
+  const { syncEngine } = await import('@/server/notion/sync-engine')
+  const q = await getPollQueue()
+  const existing = await q.getRepeatableJobs()
+  if (existing.length === 0) {
+    await q.add('poll', {}, { repeat: { every: 60_000 } } as any)
+    q.process('poll', async () => { await syncEngine.syncAll() })
+    console.log('[NotionPoll] Started polling every 60s')
+  }
+}
