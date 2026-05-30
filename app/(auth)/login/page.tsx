@@ -40,25 +40,29 @@ export default function LoginPage() {
   ]
 
   return (
-    <div className="min-h-screen flex" style={{ background: 'var(--navy)' }}>
-      {/* Left brand panel */}
-      <div className="flex-1 flex items-center justify-center p-10 relative overflow-hidden">
+    <div className="min-h-screen flex flex-col md:flex-row" style={{ background: 'var(--navy)' }}>
+      {/* Brand panel — full width on mobile, left half on desktop */}
+      <div className="flex items-center justify-center p-8 md:flex-1 relative overflow-hidden
+                      min-h-[180px] md:min-h-screen">
         <div className="absolute w-[500px] h-[500px] rounded-full -top-24 -left-24 opacity-8"
              style={{ background: 'var(--blue)' }} />
         <div className="absolute w-[300px] h-[300px] rounded-full -bottom-12 -right-12 opacity-8"
              style={{ background: 'var(--blue)' }} />
         <div className="relative text-center z-10">
-          <div className="text-7xl mb-5">🧹</div>
-          <div className="text-3xl font-light text-white/80 leading-tight italic">
+          <div className="text-5xl md:text-7xl mb-3 md:mb-5">🧹</div>
+          <div className="text-xl md:text-3xl font-light text-white/80 leading-tight italic">
             Operations that run<br />
             <strong className="font-semibold text-white not-italic">clean.</strong>
           </div>
-          <div className="mt-5 text-sm text-white/30">Tatimar Cleaning Operations Platform</div>
+          <div className="mt-3 text-xs md:text-sm text-white/30 hidden md:block">
+            Tatimar Cleaning Operations Platform
+          </div>
         </div>
       </div>
 
-      {/* Right form panel */}
-      <div className="w-[420px] shrink-0 bg-white flex items-center justify-center p-10">
+      {/* Form panel — full width on mobile, right column on desktop */}
+      <div className="w-full md:w-[420px] md:shrink-0 bg-white flex items-center justify-center
+                      px-6 py-8 md:p-10 rounded-t-3xl md:rounded-none">
         <div className="w-full max-w-sm">
           {/* Logo */}
           <div className="flex items-center gap-3 mb-8">
