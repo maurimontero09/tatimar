@@ -30,9 +30,9 @@ export function DashboardShell({ role, user, children }: Props) {
         />
       )}
 
-      {/* Sidebar — hidden off-screen on mobile, always visible on lg+ */}
-      <div className={`fixed inset-y-0 left-0 z-30 transition-transform duration-200 ease-in-out
-                       lg:relative lg:translate-x-0 lg:z-auto
+      {/* Sidebar — slides in on mobile, always in flow on desktop */}
+      <div className={`fixed inset-y-0 left-0 z-30 shrink-0 transition-transform duration-200 ease-in-out
+                       lg:static lg:translate-x-0 lg:z-auto
                        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <Sidebar role={role} user={user} />
       </div>

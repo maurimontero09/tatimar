@@ -17,11 +17,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        // TEMP: bypass DB to confirm auth flow works
-        if (credentials?.email === 'admin@tatimar.ca') {
-          return { id: 'temp-admin', email: 'admin@tatimar.ca', name: 'Admin', role: 'SUPER_ADMIN' as any }
+        // TEMP: hardcoded accounts while DB connection is resolved
+        const TEMP_USERS: Record<string, { id: string; name: string; role: string }> = {
+          'admin@tatimar.ca':          { id: 'tmp-1', name: 'Alex Martin',    role: 'SUPER_ADMIN' },
+          'manager@tatimar.ca':        { id: 'tmp-2', name: 'Jean Bouchard',  role: 'MANAGER'     },
+          'finance@tatimar.ca':        { id: 'tmp-3', name: 'Claire Dubois',  role: 'ACCOUNTANT'  },
+          'maria@tatimar.ca':          { id: 'tmp-4', name: 'Maria Dupont',   role: 'CLEANER'     },
+          'jean@tatimar.ca':           { id: 'tmp-5', name: 'Jean Tremblay',  role: 'CLEANER'     },
+          'alvaro.user@tatimar.ca':    { id: 'tmp-6', name: 'Alvaro',         role: 'CLEANER'     },
+          'giovanni.user@tatimar.ca':  { id: 'tmp-7', name: 'Giovanni',       role: 'CLEANER'     },
         }
-        return null
+        const email = credentials?.email as string | undefined
+        const user  = email ? TEMP_USERS[email] : null
+        if (!user) return null
+        return { id: user.id, email, name: user.name, role: user.role as any }
       },
     }),
   ],
