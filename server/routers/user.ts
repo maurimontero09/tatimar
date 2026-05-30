@@ -79,9 +79,10 @@ export const userRouter = createTRPCRouter({
       const existing = await ctx.prisma.user.findUnique({ where: { email: input.email } })
       if (existing) throw new TRPCError({ code: 'CONFLICT', message: 'Email already in use' })
 
-      const passwordHash = await bcrypt.hash(input.password, 12)
+      const { password, ...rest } = input
+      const passwordHash = await bcrypt.hash(password, 12)
       return ctx.prisma.user.create({
-        data: { ...input, passwordHash, password: undefined },
+        data: { ...rest, passwordHash },
       })
     }),
 
