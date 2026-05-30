@@ -2,7 +2,6 @@ import { auth } from '@/server/auth/config'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/server/db/client'
 import { startOfDay, endOfDay, addDays } from 'date-fns'
-import { defaultRouteForRole } from '@/lib/permissions'
 import { getDaysUntilExpiry } from '@/lib/utils'
 
 export default async function DashboardPage() {
@@ -24,14 +23,14 @@ export default async function DashboardPage() {
         clockEvents: { orderBy: { timestamp: 'desc' }, take: 1 },
       },
       orderBy: { startTime: 'asc' },
-    }),
+    }).catch(() => []),
     prisma.userCertification.findMany({
       where: { expiresAt: { lte: addDays(today, 60), gte: today } },
       include: { user: { select: { name: true } }, certification: true },
       orderBy: { expiresAt: 'asc' },
       take: 5,
-    }),
-    prisma.user.count({ where: { role: 'CLEANER', isActive: true } }),
+    }).catch(() => []),
+    prisma.user.count({ where: { role: 'CLEANER', isActive: true } }).catch(() => 0),
   ])
 
   const completed = todaySchedules.filter(s => s.status === 'COMPLETED').length
@@ -89,7 +88,6 @@ export default async function DashboardPage() {
               <tbody>
                 {todaySchedules.map(s => {
                   const assignee = s.assignments[0]?.user
-                  const lastEvent = s.clockEvents[0]
                   return (
                     <tr key={s.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-3 font-mono text-[11px] text-gray-500">

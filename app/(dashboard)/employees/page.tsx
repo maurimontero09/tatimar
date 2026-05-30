@@ -24,7 +24,7 @@ export default async function EmployeesPage() {
       },
     },
     orderBy: { name: 'asc' },
-  })
+  }).catch(() => [])
 
   const BG_COLORS = ['bg-blue-100 text-blue-700', 'bg-teal-100 text-teal-700',
                      'bg-amber-100 text-amber-700', 'bg-slate-200 text-slate-700']

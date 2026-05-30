@@ -27,7 +27,7 @@ export default async function ClientsPage() {
         include: { assignments: { include: { user: { select: { name: true } } } } },
       },
     },
-  })
+  }).catch(() => [])
 
   return (
     <div>
