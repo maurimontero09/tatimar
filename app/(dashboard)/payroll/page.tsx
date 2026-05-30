@@ -27,7 +27,7 @@ export default async function PayrollPage() {
       },
     },
     orderBy: { name: 'asc' },
-  })
+  }).catch(() => [])
 
   // Calculate hours per cleaner
   const payrollRows = cleaners.map(cleaner => {
@@ -61,7 +61,7 @@ export default async function PayrollPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-5">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-5">
         <div>
           <h1 className="text-xl font-semibold">Payroll</h1>
           <p className="text-sm text-gray-400">
@@ -75,7 +75,7 @@ export default async function PayrollPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4 mb-5">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-5">
         {[
           { label: 'Total Hours',    value: totalHours.toFixed(1), suffix: 'hrs' },
           { label: 'Gross Payroll',  value: formatCurrency(totalGross) },

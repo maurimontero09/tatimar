@@ -11,7 +11,7 @@ export default async function MyCertificationsPage() {
     where: { userId: session.user.id },
     include: { certification: true },
     orderBy: { expiresAt: 'asc' },
-  })
+  }).catch(() => [])
 
   return (
     <div className="max-w-lg">

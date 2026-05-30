@@ -24,13 +24,13 @@ export default async function CleanerPage() {
       completionPhotos: true,
     },
     orderBy: { startTime: 'asc' },
-  })
+  }).catch(() => [])
 
   const certifications = await prisma.userCertification.findMany({
     where: { userId: session.user.id },
     include: { certification: true },
     orderBy: { expiresAt: 'asc' },
-  })
+  }).catch(() => [])
 
   return <CleanerView schedules={schedules} certifications={certifications} user={session.user} />
 }
