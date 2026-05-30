@@ -25,31 +25,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        const parsed = loginSchema.safeParse(credentials)
-        if (!parsed.success) {
-          console.error('[auth] schema parse failed:', parsed.error.flatten())
-          return null
-        }
+        try {
+          const parsed = loginSchema.safeParse(credentials)
+          if (!parsed.success) return null
 
-        const user = await prisma.user.findFirst({
-          where: { email: parsed.data.email, isActive: true },
-        })
-        if (!user || !user.passwordHash) {
-          console.error('[auth] user not found or no passwordHash for:', parsed.data.email)
-          return null
-        }
+          const user = await prisma.user.findFirst({
+            where: { email: parsed.data.email, isActive: true },
+          })
+          if (!user || !user.passwordHash) return null
 
-        const valid = await bcrypt.compare(parsed.data.password, user.passwordHash)
-        if (!valid) {
-          console.error('[auth] invalid password for:', parsed.data.email)
-          return null
-        }
+          const valid = await bcrypt.compare(parsed.data.password, user.passwordHash)
+          if (!valid) return null
 
-        return {
-          id:    user.id,
-          email: user.email,
-          name:  user.name,
-          role:  user.role,
+          return { id: user.id, email: user.email, name: user.name, role: user.role }
+        } catch (err) {
+          console.error('[auth] authorize error:', err)
+          return null
         }
       },
     }),
