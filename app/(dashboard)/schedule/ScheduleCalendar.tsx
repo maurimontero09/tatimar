@@ -25,6 +25,9 @@ interface Props {
 export function ScheduleCalendar({ schedules, cleaners, clients, weekStart }: Props) {
   const [showModal, setShowModal] = useState(false)
   const [selectedSchedule, setSelectedSchedule] = useState<any>(null)
+  const [editForm, setEditForm] = useState<{
+    status: string; maxHours: string; instructions: string; accessNotes: string
+  } | null>(null)
   const [form, setForm] = useState({
     clientId: '', assigneeId: '', date: format(new Date(), 'yyyy-MM-dd'),
     startTime: '09:00', maxHours: '3', instructions: '', accessNotes: '',
@@ -34,6 +37,13 @@ export function ScheduleCalendar({ schedules, cleaners, clients, weekStart }: Pr
   const router = useRouter()
   const createSchedule = trpc.schedule.create.useMutation({
     onSuccess: () => { setShowModal(false); router.refresh() },
+  })
+  const updateSchedule = trpc.schedule.update.useMutation({
+    onSuccess: (updated) => {
+      setSelectedSchedule((s: any) => s ? { ...s, ...updated } : s)
+      setEditForm(null)
+      router.refresh()
+    },
   })
 
   function navigate(dir: 'prev' | 'next' | 'today') {
@@ -363,23 +373,84 @@ export function ScheduleCalendar({ schedules, cleaners, clients, weekStart }: Pr
 
               <div>
                 <div className="text-xs font-medium text-gray-400 mb-1.5">STATUS</div>
-                <span className={cn(
-                  'badge text-xs',
-                  selectedSchedule.status === 'IN_PROGRESS' && 'bg-green-100 text-green-700',
-                  selectedSchedule.status === 'COMPLETED'   && 'bg-blue-100 text-blue-700',
-                  selectedSchedule.status === 'PENDING'     && 'bg-gray-100 text-gray-600',
-                  selectedSchedule.status === 'CANCELLED'   && 'bg-red-100 text-red-600',
-                )}>
-                  {selectedSchedule.status?.replace('_', ' ')}
-                </span>
+                {editForm ? (
+                  <select className="form-input text-sm"
+                          value={editForm.status}
+                          onChange={e => setEditForm(f => f && ({ ...f, status: e.target.value }))}>
+                    {['PENDING','IN_PROGRESS','COMPLETED','CANCELLED'].map(s => (
+                      <option key={s} value={s}>{s.replace('_',' ')}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <span className={cn(
+                    'badge text-xs',
+                    selectedSchedule.status === 'IN_PROGRESS' && 'bg-green-100 text-green-700',
+                    selectedSchedule.status === 'COMPLETED'   && 'bg-blue-100 text-blue-700',
+                    selectedSchedule.status === 'PENDING'     && 'bg-gray-100 text-gray-600',
+                    selectedSchedule.status === 'CANCELLED'   && 'bg-red-100 text-red-600',
+                  )}>
+                    {selectedSchedule.status?.replace('_', ' ')}
+                  </span>
+                )}
               </div>
+
+              {editForm && (
+                <>
+                  <div>
+                    <div className="text-xs font-medium text-gray-400 mb-1.5">MAX HOURS</div>
+                    <input className="form-input text-sm" type="number" min="0.5" max="24" step="0.5"
+                           value={editForm.maxHours}
+                           onChange={e => setEditForm(f => f && ({ ...f, maxHours: e.target.value }))} />
+                  </div>
+                  <div>
+                    <div className="text-xs font-medium text-gray-400 mb-1.5">INSTRUCTIONS</div>
+                    <textarea className="form-input text-sm resize-none" rows={3}
+                              value={editForm.instructions}
+                              onChange={e => setEditForm(f => f && ({ ...f, instructions: e.target.value }))} />
+                  </div>
+                  <div>
+                    <div className="text-xs font-medium text-gray-400 mb-1.5">ACCESS NOTES</div>
+                    <input className="form-input text-sm"
+                           value={editForm.accessNotes}
+                           onChange={e => setEditForm(f => f && ({ ...f, accessNotes: e.target.value }))} />
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-2">
-              <button className="btn btn-secondary text-sm" onClick={() => setSelectedSchedule(null)}>
-                Close
-              </button>
-              <button className="btn btn-primary text-sm">Edit Job</button>
+              {editForm ? (
+                <>
+                  <button className="btn btn-secondary text-sm"
+                          onClick={() => setEditForm(null)}>Cancel</button>
+                  <button className="btn btn-primary text-sm"
+                          disabled={updateSchedule.isPending}
+                          onClick={() => updateSchedule.mutate({
+                            id:           selectedSchedule.id,
+                            status:       editForm.status as any,
+                            maxHours:     parseFloat(editForm.maxHours),
+                            instructions: editForm.instructions || undefined,
+                            accessNotes:  editForm.accessNotes  || undefined,
+                          })}>
+                    {updateSchedule.isPending ? 'Saving…' : 'Save changes'}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button className="btn btn-secondary text-sm" onClick={() => setSelectedSchedule(null)}>
+                    Close
+                  </button>
+                  <button className="btn btn-primary text-sm"
+                          onClick={() => setEditForm({
+                            status:       selectedSchedule.status,
+                            maxHours:     String(selectedSchedule.maxHours ?? 3),
+                            instructions: selectedSchedule.instructions ?? '',
+                            accessNotes:  selectedSchedule.accessNotes  ?? '',
+                          })}>
+                    Edit Job
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

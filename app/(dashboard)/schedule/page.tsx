@@ -14,7 +14,7 @@ export default async function SchedulePage({
   if (!['SUPER_ADMIN', 'MANAGER'].includes(session.user.role)) redirect('/dashboard')
 
   const today     = new Date()
-  const baseDate  = searchParams.week ? new Date(searchParams.week) : today
+  const baseDate  = searchParams.week ? new Date(searchParams.week + 'T12:00:00') : today
   const weekStart = startOfWeek(baseDate, { weekStartsOn: 1 }) // always Monday
   const weekEnd   = endOfWeek(baseDate,   { weekStartsOn: 1 })
 
