@@ -4,6 +4,7 @@ import { prisma } from '@/server/db/client'
 import { EmployeeCard } from '@/components/employees/EmployeeCard'
 import { SyncNotionButton } from '@/components/employees/SyncNotionButton'
 import { NewEmployeeModal } from '@/components/employees/NewEmployeeModal'
+import { AddEmployeeCard } from '@/components/employees/AddEmployeeCard'
 
 export default async function EmployeesPage() {
   const session = await auth()
@@ -57,13 +58,7 @@ export default async function EmployeesPage() {
           <EmployeeCard key={emp.id} employee={emp} colorClass={BG_COLORS[i % BG_COLORS.length]} />
         ))}
 
-        {/* Add new card */}
-        <div className="bg-white rounded-xl border-2 border-dashed border-gray-200 p-4
-                        flex flex-col items-center justify-center gap-2 cursor-pointer
-                        hover:border-[var(--blue)] hover:bg-blue-50/30 transition-all min-h-[200px]">
-          <div className="text-3xl text-gray-300">+</div>
-          <div className="text-sm text-gray-400">Add new employee</div>
-        </div>
+        <AddEmployeeCard />
       </div>
     </div>
   )

@@ -15,7 +15,7 @@ const EMPTY = {
   name: '', email: '', phone: '', password: '', role: 'CLEANER',
 }
 
-export function NewEmployeeModal() {
+export function NewEmployeeModal({ trigger }: { trigger?: React.ReactNode } = {}) {
   const router  = useRouter()
   const [open, setOpen]     = useState(false)
   const [form, setForm]     = useState(EMPTY)
@@ -57,9 +57,10 @@ export function NewEmployeeModal() {
 
   return (
     <>
-      <button className="btn btn-primary text-sm" onClick={() => setOpen(true)}>
-        + Add Employee
-      </button>
+      {trigger
+        ? <div onClick={() => setOpen(true)}>{trigger}</div>
+        : <button className="btn btn-primary text-sm" onClick={() => setOpen(true)}>+ Add Employee</button>
+      }
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

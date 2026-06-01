@@ -37,7 +37,8 @@ export function EmployeeCard({ employee: emp, colorClass }: Props) {
   return (
     <>
       <div className="bg-white rounded-xl border border-[var(--border)] p-4 shadow-sm
-                      hover:shadow-md hover:border-blue-200 transition-all flex flex-col gap-3">
+                      hover:shadow-md hover:border-blue-200 transition-all flex flex-col gap-3 cursor-pointer"
+           onClick={() => setProfileOpen(true)}>
         {/* Header */}
         <div className="flex items-center gap-3">
           <div className={`w-11 h-11 rounded-full flex items-center justify-center
@@ -99,11 +100,11 @@ export function EmployeeCard({ employee: emp, colorClass }: Props) {
           </div>
           <div className="flex gap-1.5">
             <button className="btn btn-secondary text-xs py-1 px-2.5"
-                    onClick={() => setProfileOpen(true)}>
+                    onClick={e => { e.stopPropagation(); setProfileOpen(true) }}>
               Profile
             </button>
             <button className="btn btn-primary text-xs py-1 px-2.5"
-                    onClick={() => setAssignOpen(true)}>Assign</button>
+                    onClick={e => { e.stopPropagation(); setAssignOpen(true) }}>Assign</button>
           </div>
         </div>
       </div>
