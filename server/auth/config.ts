@@ -1,13 +1,21 @@
 import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
+import { prisma } from '@/server/db/client'
+import bcrypt from 'bcryptjs'
+import { z } from 'zod'
 import type { Role } from '@prisma/client'
+
+const loginSchema = z.object({
+  email:    z.string().email(),
+  password: z.string().min(6),
+})
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
   session: { strategy: 'jwt', maxAge: 8 * 60 * 60 },
   pages: {
     signIn: '/login',
-    error: '/login',
+    error:  '/login',
   },
   providers: [
     Credentials({
@@ -17,20 +25,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        // TEMP: hardcoded accounts while DB connection is resolved
-        const TEMP_USERS: Record<string, { id: string; name: string; role: string }> = {
-          'admin@tatimar.ca':          { id: 'tmp-1', name: 'Alex Martin',    role: 'SUPER_ADMIN' },
-          'manager@tatimar.ca':        { id: 'tmp-2', name: 'Jean Bouchard',  role: 'MANAGER'     },
-          'finance@tatimar.ca':        { id: 'tmp-3', name: 'Claire Dubois',  role: 'ACCOUNTANT'  },
-          'maria@tatimar.ca':          { id: 'tmp-4', name: 'Maria Dupont',   role: 'CLEANER'     },
-          'jean@tatimar.ca':           { id: 'tmp-5', name: 'Jean Tremblay',  role: 'CLEANER'     },
-          'alvaro.user@tatimar.ca':    { id: 'tmp-6', name: 'Alvaro',         role: 'CLEANER'     },
-          'giovanni.user@tatimar.ca':  { id: 'tmp-7', name: 'Giovanni',       role: 'CLEANER'     },
+        try {
+          const parsed = loginSchema.safeParse(credentials)
+          if (!parsed.success) return null
+
+          const user = await prisma.user.findFirst({
+            where: { email: parsed.data.email, isActive: true },
+          })
+          if (!user || !user.passwordHash) return null
+
+          const valid = await bcrypt.compare(parsed.data.password, user.passwordHash)
+          if (!valid) return null
+
+          return { id: user.id, email: user.email, name: user.name, role: user.role }
+        } catch (err) {
+          console.error('[auth] authorize error:', err)
+          return null
         }
-        const email = credentials?.email as string | undefined
-        const user  = email ? TEMP_USERS[email] : null
-        if (!user) return null
-        return { id: user.id, email, name: user.name, role: user.role as any }
       },
     }),
   ],
