@@ -115,7 +115,7 @@ export const userRouter = createTRPCRouter({
   syncFromNotion: adminProcedure.mutation(async ({ ctx }) => {
     const { Client } = await import('@notionhq/client')
     const bcryptLib   = await import('bcryptjs')
-    const notion = new Client({ auth: process.env.NOTION_TOKEN ?? '' })
+    const notion = new Client({ auth: (process.env.NOTION_TOKEN ?? '').trim() })
     const dbId   = process.env.NOTION_USERS_DB_ID
     const domain = process.env.NOTION_USER_EMAIL_DOMAIN ?? 'tatimar.ca'
 

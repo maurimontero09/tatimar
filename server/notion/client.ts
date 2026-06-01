@@ -8,7 +8,7 @@ if (!process.env.NOTION_TOKEN) {
   console.warn('[Notion] NOTION_TOKEN is not set — Notion features will be unavailable')
 }
 
-export const notion = new Client({ auth: process.env.NOTION_TOKEN ?? '' })
+export const notion = new Client({ auth: (process.env.NOTION_TOKEN ?? '').trim() })
 
 // ─── Database IDs ─────────────────────────────────
 export const NOTION_DBS = {
