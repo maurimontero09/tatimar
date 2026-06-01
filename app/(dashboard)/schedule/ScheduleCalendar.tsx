@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { format, addDays, parseISO, isToday } from 'date-fns'
 import { trpc } from '@/lib/trpc'
-import { cn, formatTime, initials } from '@/lib/utils'
+import { cn, initials } from '@/lib/utils'
 
 const HOURS = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
 
@@ -30,9 +31,9 @@ export function ScheduleCalendar({ schedules, cleaners, clients, weekStart }: Pr
     services: [] as string[],
   })
 
-  const utils = trpc.useContext()
+  const router = useRouter()
   const createSchedule = trpc.schedule.create.useMutation({
-    onSuccess: () => { setShowModal(false); utils.schedule.list.invalidate() },
+    onSuccess: () => { setShowModal(false); router.refresh() },
   })
 
   const days = Array.from({ length: 5 }, (_, i) => addDays(parseISO(weekStart), i))
