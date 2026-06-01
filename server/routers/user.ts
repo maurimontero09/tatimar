@@ -110,4 +110,59 @@ export const userRouter = createTRPCRouter({
       orderBy: { name: 'asc' },
     })
   }),
+
+  // Sync users from Notion (admin only)
+  syncFromNotion: adminProcedure.mutation(async ({ ctx }) => {
+    const { Client } = await import('@notionhq/client')
+    const bcryptLib   = await import('bcryptjs')
+    const notion = new Client({ auth: process.env.NOTION_TOKEN ?? '' })
+    const dbId   = process.env.NOTION_USERS_DB_ID
+    const domain = process.env.NOTION_USER_EMAIL_DOMAIN ?? 'tatimar.ca'
+
+    if (!dbId) throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'NOTION_USERS_DB_ID is not set' })
+
+    const pages: any[] = []
+    let cursor: string | undefined
+    do {
+      const res = await notion.databases.query({ database_id: dbId, start_cursor: cursor, page_size: 100 })
+      pages.push(...res.results)
+      cursor = res.has_more ? (res.next_cursor ?? undefined) : undefined
+    } while (cursor)
+
+    let created = 0, updated = 0, skipped = 0
+
+    for (const page of pages as any[]) {
+      const titleProp = page.properties?.username
+      const username  = titleProp?.type === 'title' ? titleProp.title[0]?.plain_text ?? '' : ''
+      if (!username) { skipped++; continue }
+
+      const email        = username.includes('@') ? username : `${username}@${domain}`
+      const fullName     = page.properties?.fullName?.rich_text?.[0]?.plain_text || username
+      const plainPwd     = page.properties?.password?.rich_text?.[0]?.plain_text ?? ''
+      const formulaProp  = page.properties?.authID
+      const authId       = formulaProp?.type === 'formula'
+        ? (formulaProp.formula?.string ?? page.id)
+        : page.id
+      const passwordHash = plainPwd ? await bcryptLib.default.hash(plainPwd, 10) : ''
+
+      const existing = await ctx.prisma.user.findFirst({
+        where: { OR: [{ notionUserId: authId }, { email }] },
+      })
+
+      if (existing) {
+        await ctx.prisma.user.update({
+          where: { id: existing.id },
+          data: { name: fullName, email, notionUserId: authId, ...(passwordHash && { passwordHash }) },
+        })
+        updated++
+      } else {
+        await ctx.prisma.user.create({
+          data: { email, name: fullName, notionUserId: authId, passwordHash, role: 'CLEANER', isActive: true },
+        })
+        created++
+      }
+    }
+
+    return { created, updated, skipped }
+  }),
 })

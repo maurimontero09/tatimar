@@ -2,6 +2,7 @@ import { auth } from '@/server/auth/config'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/server/db/client'
 import { EmployeeCard } from '@/components/employees/EmployeeCard'
+import { SyncNotionButton } from '@/components/employees/SyncNotionButton'
 
 export default async function EmployeesPage() {
   const session = await auth()
@@ -45,6 +46,7 @@ export default async function EmployeesPage() {
             <input type="text" placeholder="Search employees…"
                    className="bg-transparent border-none outline-none text-sm w-full" />
           </div>
+          <SyncNotionButton />
           <button className="btn btn-primary text-sm">+ Add Employee</button>
         </div>
       </div>
