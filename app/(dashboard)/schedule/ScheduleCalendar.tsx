@@ -2,11 +2,11 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { format, addDays, parseISO, isToday } from 'date-fns'
+import { format, addDays, parseISO, isToday, startOfWeek } from 'date-fns'
 import { trpc } from '@/lib/trpc'
 import { cn, initials } from '@/lib/utils'
 
-const HOURS = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
+const HOURS = Array.from({ length: 24 }, (_, i) => i) // 0 AM → 11 PM
 
 const STATUS_COLORS: Record<string, string> = {
   PENDING:     'bg-blue-50 text-blue-700 border-l-blue-500',
@@ -35,6 +35,15 @@ export function ScheduleCalendar({ schedules, cleaners, clients, weekStart }: Pr
   const createSchedule = trpc.schedule.create.useMutation({
     onSuccess: () => { setShowModal(false); router.refresh() },
   })
+
+  function navigate(dir: 'prev' | 'next' | 'today') {
+    const current = parseISO(weekStart)
+    const newWeek =
+      dir === 'prev'  ? addDays(current, -7) :
+      dir === 'next'  ? addDays(current,  7) :
+      startOfWeek(new Date(), { weekStartsOn: 1 })
+    router.push(`/schedule?week=${format(newWeek, 'yyyy-MM-dd')}`)
+  }
 
   const days = Array.from({ length: 5 }, (_, i) => addDays(parseISO(weekStart), i))
 
@@ -78,12 +87,12 @@ export function ScheduleCalendar({ schedules, cleaners, clients, weekStart }: Pr
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <button className="btn btn-secondary text-sm">← Prev</button>
-          <button className="btn btn-secondary text-sm"
+          <button className="btn btn-secondary text-sm" onClick={() => navigate('prev')}>← Prev</button>
+          <button className="btn btn-secondary text-sm" onClick={() => navigate('today')}
                   style={{ background: 'var(--blue-pale)', color: 'var(--blue)', borderColor: 'var(--blue-pale)' }}>
             Today
           </button>
-          <button className="btn btn-secondary text-sm">Next →</button>
+          <button className="btn btn-secondary text-sm" onClick={() => navigate('next')}>Next →</button>
           <button className="btn btn-primary text-sm" onClick={() => setShowModal(true)}>
             + Add Job
           </button>

@@ -4,14 +4,19 @@ import { prisma } from '@/server/db/client'
 import { startOfWeek, endOfWeek, addDays, format } from 'date-fns'
 import { ScheduleCalendar } from './ScheduleCalendar'
 
-export default async function SchedulePage() {
+export default async function SchedulePage({
+  searchParams,
+}: {
+  searchParams: { week?: string }
+}) {
   const session = await auth()
   if (!session?.user) redirect('/login')
   if (!['SUPER_ADMIN', 'MANAGER'].includes(session.user.role)) redirect('/dashboard')
 
-  const today = new Date()
-  const weekStart = startOfWeek(today, { weekStartsOn: 1 }) // Monday
-  const weekEnd   = endOfWeek(today, { weekStartsOn: 1 })
+  const today     = new Date()
+  const baseDate  = searchParams.week ? new Date(searchParams.week) : today
+  const weekStart = startOfWeek(baseDate, { weekStartsOn: 1 }) // always Monday
+  const weekEnd   = endOfWeek(baseDate,   { weekStartsOn: 1 })
 
   const [schedules, cleaners, clients] = await Promise.all([
     prisma.schedule.findMany({
