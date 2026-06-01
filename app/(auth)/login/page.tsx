@@ -49,13 +49,17 @@ export default function LoginPage() {
              style={{ background: 'var(--blue)' }} />
         <div className="absolute w-[300px] h-[300px] rounded-full -bottom-12 -right-12 opacity-8"
              style={{ background: 'var(--blue)' }} />
-        <div className="relative text-center z-10">
-          <div className="text-5xl md:text-7xl mb-3 md:mb-5">🧹</div>
+        <div className="relative text-center z-10 flex flex-col items-center gap-6">
+          {/* Logo on white card */}
+          <div className="bg-white rounded-2xl px-8 py-5 shadow-lg">
+            <Image src="/logo.png" alt="Tatimar Corporate Services" width={200} height={70}
+                   className="object-contain" priority />
+          </div>
           <div className="text-xl md:text-3xl font-light text-white/80 leading-tight italic">
             Operations that run<br />
             <strong className="font-semibold text-white not-italic">clean.</strong>
           </div>
-          <div className="mt-3 text-xs md:text-sm text-white/30 hidden md:block">
+          <div className="text-xs md:text-sm text-white/30 hidden md:block">
             Tatimar Cleaning Operations Platform
           </div>
         </div>
@@ -65,12 +69,6 @@ export default function LoginPage() {
       <div className="w-full md:w-[420px] md:shrink-0 bg-white flex items-center justify-center
                       px-6 py-8 md:p-10 rounded-t-3xl md:rounded-none">
         <div className="w-full max-w-sm">
-          {/* Logo */}
-          <div className="mb-8">
-            <Image src="/logo.png" alt="Tatimar Corporate Services" width={180} height={62}
-                   className="object-contain" priority />
-          </div>
-
           <h1 className="text-xl font-semibold mb-1">Welcome back</h1>
           <p className="text-sm text-gray-400 mb-6">Sign in to your account</p>
 
