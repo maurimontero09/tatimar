@@ -41,33 +41,33 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row" style={{ background: 'var(--navy)' }}>
-      {/* Brand panel — full width on mobile, left half on desktop */}
-      <div className="flex items-center justify-center p-8 md:flex-1 relative overflow-hidden
-                      min-h-[180px] md:min-h-screen">
+      {/* Brand panel — desktop only */}
+      <div className="hidden md:flex md:flex-1 items-center justify-center p-10 relative overflow-hidden">
         <div className="absolute w-[500px] h-[500px] rounded-full -top-24 -left-24 opacity-8"
              style={{ background: 'var(--blue)' }} />
         <div className="absolute w-[300px] h-[300px] rounded-full -bottom-12 -right-12 opacity-8"
              style={{ background: 'var(--blue)' }} />
         <div className="relative text-center z-10 flex flex-col items-center gap-6">
-          {/* Logo on white card */}
           <div className="bg-white rounded-2xl px-8 py-5 shadow-lg">
-            <img src="/logo.png" alt="Tatimar Corporate Services" width={200}
-                 className="object-contain" />
+            <img src="/logo.png" alt="Tatimar Corporate Services" width={220} className="object-contain" />
           </div>
-          <div className="text-xl md:text-3xl font-light text-white/80 leading-tight italic">
+          <div className="text-3xl font-light text-white/80 leading-tight italic">
             Operations that run<br />
             <strong className="font-semibold text-white not-italic">clean.</strong>
           </div>
-          <div className="text-xs md:text-sm text-white/30 hidden md:block">
-            Tatimar Cleaning Operations Platform
-          </div>
+          <div className="text-sm text-white/30">Tatimar Cleaning Operations Platform</div>
         </div>
       </div>
 
-      {/* Form panel — full width on mobile, right column on desktop */}
-      <div className="w-full md:w-[420px] md:shrink-0 bg-white flex items-center justify-center
-                      px-6 py-8 md:p-10 rounded-t-3xl md:rounded-none">
+      {/* Form panel — full screen on mobile, fixed width on desktop */}
+      <div className="flex-1 md:flex-none md:w-[420px] bg-white flex items-center justify-center
+                      px-6 py-10 md:p-10">
         <div className="w-full max-w-sm">
+          {/* Logo — mobile only */}
+          <div className="md:hidden flex justify-center mb-8">
+            <img src="/logo.png" alt="Tatimar Corporate Services" width={180} className="object-contain" />
+          </div>
+
           <h1 className="text-xl font-semibold mb-1">Welcome back</h1>
           <p className="text-sm text-gray-400 mb-6">Sign in to your account</p>
 
