@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
@@ -65,13 +66,9 @@ export default function LoginPage() {
                       px-6 py-8 md:p-10 rounded-t-3xl md:rounded-none">
         <div className="w-full max-w-sm">
           {/* Logo */}
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl font-semibold text-white"
-                 style={{ background: 'var(--navy)' }}>T</div>
-            <div>
-              <div className="font-semibold text-lg">Tatimar</div>
-              <div className="text-xs text-gray-400">Operations Platform</div>
-            </div>
+          <div className="mb-8">
+            <Image src="/logo.png" alt="Tatimar Corporate Services" width={180} height={62}
+                   className="object-contain" priority />
           </div>
 
           <h1 className="text-xl font-semibold mb-1">Welcome back</h1>

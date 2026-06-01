@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
@@ -51,15 +52,9 @@ export function Sidebar({ role, user }: SidebarProps) {
          style={{ background: 'var(--navy)' }}>
 
       {/* Logo */}
-      <div className="px-5 py-4 border-b border-white/7 flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-lg bg-[var(--blue)] flex items-center justify-center
-                        text-white font-semibold text-base shrink-0">
-          T
-        </div>
-        <div>
-          <div className="text-white font-semibold text-[15px] tracking-tight">Tatimar</div>
-          <div className="text-white/35 text-[10px]">Operations Platform</div>
-        </div>
+      <div className="px-5 py-4 border-b border-white/7 flex items-center">
+        <Image src="/logo.png" alt="Tatimar Corporate Services" width={150} height={52}
+               className="object-contain" priority />
       </div>
 
       {/* User info */}

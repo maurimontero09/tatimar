@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { Bell, Search } from 'lucide-react'
 import { initials } from '@/lib/utils'
 import type { Role } from '@prisma/client'
@@ -28,6 +29,11 @@ export function Topbar({ user, onMenuClick }: TopbarProps) {
           <span className="block w-[18px] h-0.5 bg-current rounded" />
         </span>
       </button>
+      {/* Logo — mobile only, shown when sidebar is hidden */}
+      <div className="lg:hidden flex-1 flex justify-center">
+        <Image src="/logo.png" alt="Tatimar" width={110} height={38} className="object-contain" />
+      </div>
+
       {/* Search — hidden on mobile */}
       <div className="hidden sm:flex items-center gap-2 bg-[var(--slate)] border border-[var(--border)]
                       rounded-lg px-3 py-1.5 w-56 focus-within:border-[var(--blue)]
@@ -42,7 +48,7 @@ export function Topbar({ user, onMenuClick }: TopbarProps) {
         />
       </div>
 
-      <div className="flex-1" />
+      <div className="hidden lg:block flex-1" />
 
       {/* Notifications */}
       <button className="relative w-8 h-8 rounded-lg flex items-center justify-center

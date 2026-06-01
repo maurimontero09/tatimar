@@ -20,6 +20,10 @@ export const metadata: Metadata = {
   title: 'Tatimar — Operations Platform',
   description: 'Cleaning operations management for Tatimar',
   manifest: '/manifest.json',
+  icons: {
+    icon:  '/logo.png',
+    apple: '/logo.png',
+  },
 }
 
 export const viewport: Viewport = {
