@@ -46,13 +46,20 @@ export function ScheduleCalendar({ schedules, cleaners, clients, weekStart }: Pr
     },
   })
 
+  function toUTCDateString(d: Date) {
+    const y  = d.getUTCFullYear()
+    const m  = String(d.getUTCMonth() + 1).padStart(2, '0')
+    const dd = String(d.getUTCDate()).padStart(2, '0')
+    return `${y}-${m}-${dd}`
+  }
+
   function navigate(dir: 'prev' | 'next' | 'today') {
     const current = parseISO(weekStart)
     const newWeek =
       dir === 'prev'  ? addDays(current, -7) :
       dir === 'next'  ? addDays(current,  7) :
       startOfWeek(new Date(), { weekStartsOn: 1 })
-    router.push(`/schedule?week=${format(newWeek, 'yyyy-MM-dd')}`)
+    router.push(`/schedule?week=${toUTCDateString(newWeek)}`)
   }
 
   const days = Array.from({ length: 5 }, (_, i) => addDays(parseISO(weekStart), i))
