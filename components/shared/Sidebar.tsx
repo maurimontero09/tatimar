@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
@@ -53,8 +52,8 @@ export function Sidebar({ role, user }: SidebarProps) {
 
       {/* Logo */}
       <div className="px-5 py-4 border-b border-white/7 flex items-center">
-        <Image src="/logo.png" alt="Tatimar Corporate Services" width={150} height={52}
-               className="object-contain" priority />
+        <img src="/logo.png" alt="Tatimar Corporate Services" width={150}
+             className="object-contain" />
       </div>
 
       {/* User info */}

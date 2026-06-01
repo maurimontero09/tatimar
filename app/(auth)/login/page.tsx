@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
@@ -52,8 +51,8 @@ export default function LoginPage() {
         <div className="relative text-center z-10 flex flex-col items-center gap-6">
           {/* Logo on white card */}
           <div className="bg-white rounded-2xl px-8 py-5 shadow-lg">
-            <Image src="/logo.png" alt="Tatimar Corporate Services" width={200} height={70}
-                   className="object-contain" priority />
+            <img src="/logo.png" alt="Tatimar Corporate Services" width={200}
+                 className="object-contain" />
           </div>
           <div className="text-xl md:text-3xl font-light text-white/80 leading-tight italic">
             Operations that run<br />

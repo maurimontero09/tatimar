@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
 import { Bell, Search } from 'lucide-react'
 import { initials } from '@/lib/utils'
 import type { Role } from '@prisma/client'
@@ -31,7 +30,7 @@ export function Topbar({ user, onMenuClick }: TopbarProps) {
       </button>
       {/* Logo — mobile only, shown when sidebar is hidden */}
       <div className="lg:hidden flex-1 flex justify-center">
-        <Image src="/logo.png" alt="Tatimar" width={110} height={38} className="object-contain" />
+        <img src="/logo.png" alt="Tatimar" width={110} className="object-contain" />
       </div>
 
       {/* Search — hidden on mobile */}
