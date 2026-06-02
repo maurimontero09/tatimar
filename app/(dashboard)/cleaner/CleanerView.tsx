@@ -72,19 +72,20 @@ function JobDetailModal({ schedule, currentUserId, onClose }: {
       })
       const { presignedUrl } = await res.json()
       await fetch(presignedUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } })
-      setUploadedCount(n => n + 1)
+      setUploadedCount(uploadedCount + 1)
     } finally {
       setUploading(false)
       e.target.value = ''
     }
   }
 
-  const statusColor = {
+  const STATUS_COLORS: Record<string, string> = {
     IN_PROGRESS: 'bg-[var(--teal-pale)] text-[var(--teal)]',
     PENDING:     'bg-[var(--blue-pale)] text-[var(--blue)]',
     COMPLETED:   'bg-green-100 text-green-700',
     CANCELLED:   'bg-red-100 text-red-600',
-  }[schedule.status] ?? 'bg-gray-100 text-gray-600'
+  }
+  const statusColor = STATUS_COLORS[schedule.status as string] ?? 'bg-gray-100 text-gray-600'
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white">
