@@ -17,10 +17,10 @@ export async function sendSms(to: string, body: string): Promise<void> {
   try {
     const twilio = (await import('twilio')).default
     const client = twilio(sid, token)
-    await client.messages.create({ to, from, body })
-    console.log(`[SMS] Sent to ${to}`)
-  } catch (err) {
-    console.error('[SMS] Failed to send:', err)
+    const msg = await client.messages.create({ to, from, body })
+    console.log(`[SMS] Sent to ${to} — SID: ${msg.sid} status: ${msg.status}`)
+  } catch (err: any) {
+    console.error(`[SMS] Failed to send to ${to} — code: ${err?.code} message: ${err?.message}`)
   }
 }
 
