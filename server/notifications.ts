@@ -2,6 +2,28 @@ import webpush from 'web-push'
 import { Resend } from 'resend'
 import { prisma } from '@/server/db/client'
 
+// ─── Twilio SMS ───────────────────────────────────────────────────────────────
+
+export async function sendSms(to: string, body: string): Promise<void> {
+  const sid   = process.env.TWILIO_ACCOUNT_SID
+  const token = process.env.TWILIO_AUTH_TOKEN
+  const from  = process.env.TWILIO_PHONE_NUMBER
+
+  if (!sid || !token || !from) {
+    console.warn('[SMS] Twilio not configured — skipping:', body)
+    return
+  }
+
+  try {
+    const twilio = (await import('twilio')).default
+    const client = twilio(sid, token)
+    await client.messages.create({ to, from, body })
+    console.log(`[SMS] Sent to ${to}`)
+  } catch (err) {
+    console.error('[SMS] Failed to send:', err)
+  }
+}
+
 webpush.setVapidDetails(
   process.env.VAPID_EMAIL!,
   process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,

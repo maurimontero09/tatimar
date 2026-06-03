@@ -1,6 +1,42 @@
 import { z } from 'zod'
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc'
 import { TRPCError } from '@trpc/server'
+import { sendSms } from '@/server/notifications'
+import { format } from 'date-fns'
+
+const NOTIFY_PHONE = process.env.TWILIO_NOTIFY_PHONE ?? ''
+
+async function buildClockSms(
+  type: 'CLOCK_IN' | 'CLOCK_OUT',
+  cleanerName: string,
+  clientName: string,
+  lat?: number | null,
+  lng?: number | null,
+) {
+  const action = type === 'CLOCK_IN' ? 'clock in' : 'clock out'
+  const now    = new Date()
+  const hour   = format(now, 'HH:mm')
+  const date   = format(now, 'MMM d, yyyy')
+
+  let locLine = 'Location: not available'
+  if (lat && lng) {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18`,
+        { headers: { 'Accept-Language': 'en', 'User-Agent': 'TatimarApp/1.0' } }
+      )
+      const data = await res.json()
+      const a    = data.address ?? {}
+      const parts = [a.road ?? a.pedestrian, a.house_number, a.suburb ?? a.city_district, a.city ?? a.town].filter(Boolean)
+      const address = parts.join(', ') || data.display_name || `${lat}, ${lng}`
+      locLine = `${address}\nhttps://maps.google.com/?q=${lat},${lng}`
+    } catch {
+      locLine = `https://maps.google.com/?q=${lat},${lng}`
+    }
+  }
+
+  return `${cleanerName}\n\nJust made the ${action} at ${hour} on ${date}\nWork order: ${clientName}\n📍 ${locLine}`
+}
 
 export const clockRouter = createTRPCRouter({
   clockIn: protectedProcedure
@@ -33,23 +69,35 @@ export const clockRouter = createTRPCRouter({
         throw new TRPCError({ code: 'CONFLICT', message: 'Already clocked in' })
       }
 
-      // Create clock-in event and update schedule status
+      const schedule = await prisma.schedule.findUnique({
+        where: { id: input.scheduleId },
+        include: { client: true },
+      })
+
       const [event] = await prisma.$transaction([
         prisma.clockEvent.create({
           data: {
-            userId: session.user.id,
+            userId:     session.user.id,
             scheduleId: input.scheduleId,
-            type: 'CLOCK_IN',
-            lat: input.lat,
-            lng: input.lng,
-            accuracy: input.accuracy,
+            type:       'CLOCK_IN',
+            lat:        input.lat,
+            lng:        input.lng,
+            accuracy:   input.accuracy,
           },
         }),
         prisma.schedule.update({
           where: { id: input.scheduleId },
-          data: { status: 'IN_PROGRESS' },
+          data:  { status: 'IN_PROGRESS' },
         }),
       ])
+
+      // Send SMS notification (non-blocking)
+      if (NOTIFY_PHONE) {
+        const cleaner = await prisma.user.findUnique({ where: { id: session.user.id }, select: { name: true } })
+        buildClockSms('CLOCK_IN', cleaner?.name ?? 'Cleaner', schedule?.client?.name ?? '', input.lat, input.lng)
+          .then(msg => sendSms(NOTIFY_PHONE, msg))
+          .catch(err => console.error('[SMS clock-in]', err))
+      }
 
       return event
     }),
@@ -73,17 +121,30 @@ export const clockRouter = createTRPCRouter({
         throw new TRPCError({ code: 'CONFLICT', message: 'Not clocked in' })
       }
 
-      return prisma.clockEvent.create({
+      const outEvent = await prisma.clockEvent.create({
         data: {
-          userId:    session.user.id,
+          userId:     session.user.id,
           scheduleId: input.scheduleId,
-          type:      'CLOCK_OUT',
-          lat:       input.lat,
-          lng:       input.lng,
-          accuracy:  input.accuracy,
-          notes:     input.notes,
+          type:       'CLOCK_OUT',
+          lat:        input.lat,
+          lng:        input.lng,
+          accuracy:   input.accuracy,
+          notes:      input.notes,
         },
       })
+
+      // Send SMS notification (non-blocking)
+      if (NOTIFY_PHONE) {
+        const [cleaner, schedule] = await Promise.all([
+          prisma.user.findUnique({ where: { id: session.user.id }, select: { name: true } }),
+          prisma.schedule.findUnique({ where: { id: input.scheduleId }, include: { client: true } }),
+        ])
+        buildClockSms('CLOCK_OUT', cleaner?.name ?? 'Cleaner', schedule?.client?.name ?? '', input.lat, input.lng)
+          .then(msg => sendSms(NOTIFY_PHONE, msg))
+          .catch(err => console.error('[SMS clock-out]', err))
+      }
+
+      return outEvent
     }),
 
   // Get clock events for a schedule
