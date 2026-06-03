@@ -36,15 +36,25 @@ function formatDuration(seconds: number) {
   return `${h}:${m}:${s}`
 }
 
-function getGPS(): Promise<{ lat: number; lng: number; accuracy: number } | null> {
+type GpsResult = { lat: number; lng: number; accuracy: number } | null
+
+function tryGPS(opts: PositionOptions): Promise<GpsResult> {
   return new Promise(resolve => {
-    if (!navigator.geolocation) return resolve(null)
     navigator.geolocation.getCurrentPosition(
       p => resolve({ lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy }),
       () => resolve(null),
-      { timeout: 6000 }
+      opts
     )
   })
+}
+
+async function getGPS(): Promise<GpsResult> {
+  if (!navigator.geolocation) return null
+  // 1st try: high accuracy (best on most phones)
+  const hi = await tryGPS({ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 })
+  if (hi) return hi
+  // 2nd try: low accuracy / cached (faster, works indoors)
+  return tryGPS({ enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 })
 }
 
 // ─── Live accumulated timer ───────────────────────────────────────────────────
@@ -107,8 +117,18 @@ function JobDetailModal({ scheduleId, cleanerName, cleanerId, onClose }: {
   cleanerId: string
   onClose: () => void
 }) {
-  const [uploading, setUploading]   = useState(false)
-  const [toast, setToast]           = useState<string | null>(null)
+  const [uploading, setUploading]       = useState(false)
+  const [toast, setToast]               = useState<string | null>(null)
+  const [gpsStatus, setGpsStatus]       = useState<'unknown' | 'ok' | 'denied' | 'getting'>('unknown')
+
+  // Check permission on mount
+  useEffect(() => {
+    if (!navigator.geolocation) { setGpsStatus('denied'); return }
+    navigator.permissions?.query({ name: 'geolocation' }).then(r => {
+      if (r.state === 'granted')  setGpsStatus('ok')
+      if (r.state === 'denied')   setGpsStatus('denied')
+    }).catch(() => {})
+  }, [])
 
   const { data: schedule, refetch } = trpc.schedule.byId.useQuery({ id: scheduleId })
 
@@ -138,13 +158,17 @@ function JobDetailModal({ scheduleId, cleanerName, cleanerId, onClose }: {
   }
 
   const handleClockIn = async () => {
+    setGpsStatus('getting')
     const geo = await getGPS()
-    clockIn.mutate({ scheduleId, ...geo ?? {} })
+    setGpsStatus(geo ? 'ok' : 'denied')
+    clockIn.mutate({ scheduleId, ...(geo ?? {}) })
   }
 
   const handleClockOut = async () => {
+    setGpsStatus('getting')
     const geo = await getGPS()
-    clockOut.mutate({ scheduleId, ...geo ?? {} })
+    setGpsStatus(geo ? 'ok' : 'denied')
+    clockOut.mutate({ scheduleId, ...(geo ?? {}) })
   }
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -318,6 +342,20 @@ function JobDetailModal({ scheduleId, cleanerName, cleanerId, onClose }: {
         </div>
 
         {/* Action bar */}
+        {/* GPS status strip */}
+        {!isCompleted && gpsStatus !== 'unknown' && (
+          <div className={`fixed bottom-[72px] left-0 right-0 px-4 py-1.5 flex items-center gap-2 text-[10px] font-medium z-40 ${
+            gpsStatus === 'ok'      ? 'bg-green-50 text-green-700' :
+            gpsStatus === 'getting' ? 'bg-blue-50 text-[var(--blue)]' :
+                                      'bg-red-50 text-red-600'
+          }`}>
+            <MapPin size={10} />
+            {gpsStatus === 'ok'      ? 'Location ready' :
+             gpsStatus === 'getting' ? 'Getting location…' :
+             'Location unavailable — clock events saved without GPS. Enable location in browser settings.'}
+          </div>
+        )}
+
         {!isCompleted && (
           <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-3 flex gap-2 z-40">
             <a href={`https://maps.google.com/?q=${encodeURIComponent(schedule.client?.address ?? '')}`}
