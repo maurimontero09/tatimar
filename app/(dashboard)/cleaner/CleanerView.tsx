@@ -132,28 +132,19 @@ function JobDetailModal({ scheduleId, cleanerName, cleanerId, onClose }: {
 
   const { data: schedule, refetch } = trpc.schedule.byId.useQuery({ id: scheduleId })
 
-  const clockIn  = trpc.clock.clockIn.useMutation({
-    onSuccess: async () => {
-      await refetch()
-      const now = new Date()
-      buildSms('CLOCK_IN', now)
-    },
-  })
-  const clockOut = trpc.clock.clockOut.useMutation({
-    onSuccess: async () => {
-      await refetch()
-      const now = new Date()
-      buildSms('CLOCK_OUT', now)
-    },
-  })
+  const clockIn  = trpc.clock.clockIn.useMutation()
+  const clockOut = trpc.clock.clockOut.useMutation()
   const complete = trpc.schedule.markComplete.useMutation({ onSuccess: () => refetch() })
 
-  function buildSms(type: 'CLOCK_IN' | 'CLOCK_OUT', time: Date) {
-    const action  = type === 'CLOCK_IN' ? 'clock in' : 'clock out'
-    const hour    = format(time, 'HH:mm')
-    const date    = format(time, 'MMM d, yyyy')
-    const client  = schedule?.client?.name ?? 'Unknown'
-    const msg = `${cleanerName}\n\nJust made the ${action} at ${hour} on ${date}\nWork order: ${client}`
+  function buildSms(type: 'CLOCK_IN' | 'CLOCK_OUT', time: Date, geo: GpsResult) {
+    const action = type === 'CLOCK_IN' ? 'clock in' : 'clock out'
+    const hour   = format(time, 'HH:mm')
+    const date   = format(time, 'MMM d, yyyy')
+    const client = schedule?.client?.name ?? 'Unknown'
+    const locLine = geo
+      ? `📍 https://maps.google.com/?q=${geo.lat},${geo.lng} (±${Math.round(geo.accuracy)}m)`
+      : '📍 Location not available'
+    const msg = `${cleanerName}\n\nJust made the ${action} at ${hour} on ${date}\nWork order: ${client}\n${locLine}`
     setToast(msg)
   }
 
@@ -161,14 +152,18 @@ function JobDetailModal({ scheduleId, cleanerName, cleanerId, onClose }: {
     setGpsStatus('getting')
     const geo = await getGPS()
     setGpsStatus(geo ? 'ok' : 'denied')
-    clockIn.mutate({ scheduleId, ...(geo ?? {}) })
+    clockIn.mutate({ scheduleId, ...(geo ?? {}) }, {
+      onSuccess: async () => { await refetch(); buildSms('CLOCK_IN', new Date(), geo) },
+    })
   }
 
   const handleClockOut = async () => {
     setGpsStatus('getting')
     const geo = await getGPS()
     setGpsStatus(geo ? 'ok' : 'denied')
-    clockOut.mutate({ scheduleId, ...(geo ?? {}) })
+    clockOut.mutate({ scheduleId, ...(geo ?? {}) }, {
+      onSuccess: async () => { await refetch(); buildSms('CLOCK_OUT', new Date(), geo) },
+    })
   }
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

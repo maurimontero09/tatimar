@@ -57,9 +57,10 @@ export const clockRouter = createTRPCRouter({
   clockOut: protectedProcedure
     .input(z.object({
       scheduleId: z.string(),
-      lat: z.number().optional(),
-      lng: z.number().optional(),
-      notes: z.string().optional(),
+      lat:        z.number().optional(),
+      lng:        z.number().optional(),
+      accuracy:   z.number().optional(),
+      notes:      z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const { session, prisma } = ctx
@@ -74,12 +75,13 @@ export const clockRouter = createTRPCRouter({
 
       return prisma.clockEvent.create({
         data: {
-          userId: session.user.id,
+          userId:    session.user.id,
           scheduleId: input.scheduleId,
-          type: 'CLOCK_OUT',
-          lat: input.lat,
-          lng: input.lng,
-          notes: input.notes,
+          type:      'CLOCK_OUT',
+          lat:       input.lat,
+          lng:       input.lng,
+          accuracy:  input.accuracy,
+          notes:     input.notes,
         },
       })
     }),
