@@ -101,9 +101,10 @@ function SmsToast({ message, onDismiss }: { message: string; onDismiss: () => vo
 
 // ─── Job Detail Modal ─────────────────────────────────────────────────────────
 
-function JobDetailModal({ scheduleId, cleanerName, onClose }: {
+function JobDetailModal({ scheduleId, cleanerName, cleanerId, onClose }: {
   scheduleId: string
   cleanerName: string
+  cleanerId: string
   onClose: () => void
 }) {
   const [uploading, setUploading]   = useState(false)
@@ -171,11 +172,7 @@ function JobDetailModal({ scheduleId, cleanerName, onClose }: {
     </div>
   )
 
-  const { isClockedIn, lastClockIn, history } = getClockState(schedule.clockEvents ?? [], schedule.assignments?.[0]?.userId ?? '')
-  // Use the current user's ID from assignments
-  const currentUserAssignment = schedule.assignments?.find((a: any) => a.userId)
-  const currentUserId = currentUserAssignment?.userId ?? ''
-  const clockState = getClockState(schedule.clockEvents ?? [], currentUserId)
+  const clockState = getClockState(schedule.clockEvents ?? [], cleanerId)
 
   const isCompleted = schedule.status === 'COMPLETED'
   const photoCount  = schedule.completionPhotos?.length ?? 0
@@ -220,7 +217,7 @@ function JobDetailModal({ scheduleId, cleanerName, onClose }: {
                       ? `Active · clocked in at ${formatTime(new Date(clockState.lastClockIn!.timestamp))}`
                       : 'Total time worked'}
                   </div>
-                  <AccumulatedTimer events={schedule.clockEvents ?? []} userId={cleanerName} />
+                  <AccumulatedTimer events={schedule.clockEvents ?? []} userId={cleanerId} />
                 </div>
                 <Clock size={28} className="opacity-20 text-[var(--teal)]" />
               </div>
@@ -621,6 +618,7 @@ export function CleanerView({ schedules, certifications, user }: CleanerViewProp
         <JobDetailModal
           scheduleId={openJobId}
           cleanerName={user.name}
+          cleanerId={user.id}
           onClose={() => setOpenJobId(null)}
         />
       )}

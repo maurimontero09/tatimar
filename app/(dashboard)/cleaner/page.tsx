@@ -10,10 +10,14 @@ export default async function CleanerPage() {
   if (!['CLEANER','SUPER_ADMIN'].includes(session.user.role)) redirect('/dashboard')
 
   const today = new Date()
+  // ±1 day buffer handles UTC vs cleaner's local timezone (e.g. UTC-3 at 11pm still shows "today")
+  const from  = startOfDay(new Date(today.getTime() - 24 * 60 * 60 * 1000))
+  const to    = endOfDay(new Date(today.getTime() + 24 * 60 * 60 * 1000))
 
   const schedules = await prisma.schedule.findMany({
     where: {
-      date: { gte: startOfDay(today), lte: endOfDay(today) },
+      date: { gte: from, lte: to },
+      status: { not: 'CANCELLED' },
       assignments: { some: { userId: session.user.id } },
     },
     include: {
