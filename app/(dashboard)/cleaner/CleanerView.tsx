@@ -50,11 +50,30 @@ function tryGPS(opts: PositionOptions): Promise<GpsResult> {
 
 async function getGPS(): Promise<GpsResult> {
   if (!navigator.geolocation) return null
-  // 1st try: high accuracy (best on most phones)
   const hi = await tryGPS({ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 })
   if (hi) return hi
-  // 2nd try: low accuracy / cached (faster, works indoors)
   return tryGPS({ enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 })
+}
+
+async function reverseGeocode(lat: number, lng: number): Promise<string> {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+      { headers: { 'Accept-Language': 'en', 'User-Agent': 'TatimarApp/1.0' } }
+    )
+    const data = await res.json()
+    // Build a short readable address: street number + street + city
+    const a = data.address ?? {}
+    const parts = [
+      a.road ?? a.pedestrian ?? a.footway,
+      a.house_number,
+      a.suburb ?? a.neighbourhood ?? a.city_district,
+      a.city ?? a.town ?? a.village,
+    ].filter(Boolean)
+    return parts.length > 0 ? parts.join(', ') : (data.display_name ?? `${lat}, ${lng}`)
+  } catch {
+    return `${lat.toFixed(5)}, ${lng.toFixed(5)}`
+  }
 }
 
 // ─── Live accumulated timer ───────────────────────────────────────────────────
@@ -136,13 +155,13 @@ function JobDetailModal({ scheduleId, cleanerName, cleanerId, onClose }: {
   const clockOut = trpc.clock.clockOut.useMutation()
   const complete = trpc.schedule.markComplete.useMutation({ onSuccess: () => refetch() })
 
-  function buildSms(type: 'CLOCK_IN' | 'CLOCK_OUT', time: Date, geo: GpsResult) {
+  function buildSms(type: 'CLOCK_IN' | 'CLOCK_OUT', time: Date, geo: GpsResult, address: string) {
     const action = type === 'CLOCK_IN' ? 'clock in' : 'clock out'
     const hour   = format(time, 'HH:mm')
     const date   = format(time, 'MMM d, yyyy')
     const client = schedule?.client?.name ?? 'Unknown'
     const locLine = geo
-      ? `📍 https://maps.google.com/?q=${geo.lat},${geo.lng} (±${Math.round(geo.accuracy)}m)`
+      ? `📍 ${address}\n   → maps.google.com/?q=${geo.lat},${geo.lng}`
       : '📍 Location not available'
     const msg = `${cleanerName}\n\nJust made the ${action} at ${hour} on ${date}\nWork order: ${client}\n${locLine}`
     setToast(msg)
@@ -152,8 +171,9 @@ function JobDetailModal({ scheduleId, cleanerName, cleanerId, onClose }: {
     setGpsStatus('getting')
     const geo = await getGPS()
     setGpsStatus(geo ? 'ok' : 'denied')
+    const address = geo ? await reverseGeocode(geo.lat, geo.lng) : ''
     clockIn.mutate({ scheduleId, ...(geo ?? {}) }, {
-      onSuccess: async () => { await refetch(); buildSms('CLOCK_IN', new Date(), geo) },
+      onSuccess: async () => { await refetch(); buildSms('CLOCK_IN', new Date(), geo, address) },
     })
   }
 
@@ -161,8 +181,9 @@ function JobDetailModal({ scheduleId, cleanerName, cleanerId, onClose }: {
     setGpsStatus('getting')
     const geo = await getGPS()
     setGpsStatus(geo ? 'ok' : 'denied')
+    const address = geo ? await reverseGeocode(geo.lat, geo.lng) : ''
     clockOut.mutate({ scheduleId, ...(geo ?? {}) }, {
-      onSuccess: async () => { await refetch(); buildSms('CLOCK_OUT', new Date(), geo) },
+      onSuccess: async () => { await refetch(); buildSms('CLOCK_OUT', new Date(), geo, address) },
     })
   }
 
