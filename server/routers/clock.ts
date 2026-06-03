@@ -18,24 +18,12 @@ async function buildClockSms(
   const hour   = format(now, 'HH:mm')
   const date   = format(now, 'MMM d, yyyy')
 
-  let locLine = 'Location: not available'
-  if (lat && lng) {
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18`,
-        { headers: { 'Accept-Language': 'en', 'User-Agent': 'TatimarApp/1.0' } }
-      )
-      const data = await res.json()
-      const a    = data.address ?? {}
-      const parts = [a.road ?? a.pedestrian, a.house_number, a.suburb ?? a.city_district, a.city ?? a.town].filter(Boolean)
-      const address = parts.join(', ') || data.display_name || `${lat}, ${lng}`
-      locLine = `${address}\nhttps://maps.google.com/?q=${lat},${lng}`
-    } catch {
-      locLine = `https://maps.google.com/?q=${lat},${lng}`
-    }
-  }
-
-  return `${cleanerName}\n\nJust made the ${action} at ${hour} on ${date}\nWork order: ${clientName}\n📍 ${locLine}`
+  // Keep under 160 GSM-7 chars — no emoji (emoji forces UCS-2, limit drops to 70)
+  const firstName = cleanerName.split(' ')[0]
+  const mapLink   = lat && lng
+    ? `maps.google.com/?q=${lat.toFixed(4)},${lng.toFixed(4)}`
+    : 'no GPS'
+  return `Tatimar | ${firstName} clocked ${action === 'clock in' ? 'IN' : 'OUT'} ${hour} ${date}\nJob: ${clientName}\n${mapLink}`
 }
 
 export const clockRouter = createTRPCRouter({
