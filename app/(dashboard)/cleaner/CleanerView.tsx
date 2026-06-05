@@ -598,13 +598,13 @@ export function CleanerView({ schedules, certifications, user }: CleanerViewProp
 
       {/* Bottom Nav — offset by sidebar width on desktop */}
       <div className="fixed bottom-0 left-0 lg:left-[230px] right-0 bg-white border-t border-gray-100 flex items-center z-10">
-        {[
-          { icon: '📅', label: 'Schedule',  t: 'schedule'     },
-          { icon: '📋', label: 'Tasks',     t: 'instructions' },
-          { icon: '👤', label: 'Profile',   t: 'profile'      },
-        ].map(item => (
+        {([
+          { icon: '📅', label: 'Schedule',     t: 'schedule'     as const },
+          { icon: '📋', label: 'Tasks',        t: 'instructions' as const },
+          { icon: '👤', label: 'Profile',      t: 'profile'      as const },
+        ] as const).map(item => (
           <button key={item.label}
-                  onClick={() => setTab(item.t as any)}
+                  onClick={() => setTab(item.t)}
                   className={`flex-1 flex flex-col items-center gap-0.5 py-3 text-[10px] font-medium
                               transition-colors ${tab === item.t ? 'text-[var(--blue)]' : 'text-gray-400'}`}>
             <span className="text-xl leading-none">{item.icon}</span>
