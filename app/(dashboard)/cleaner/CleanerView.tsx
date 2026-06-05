@@ -335,26 +335,7 @@ function JobDetailModal({ scheduleId, cleanerName, cleanerId, onClose }: {
             </div>
           )}
 
-          {/* Photo upload */}
-          <div className="mx-4 mt-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
-                Completion Photos
-              </div>
-              {photoCount > 0 && (
-                <span className="bg-[var(--blue)] text-white text-[9px] rounded-full px-1.5 py-0.5">
-                  {photoCount}
-                </span>
-              )}
-            </div>
-            <label className="flex items-center justify-center gap-2 w-full py-3 rounded-xl
-                               border-2 border-dashed border-gray-200 text-gray-400 text-sm
-                               hover:border-[var(--blue)] hover:text-[var(--blue)] transition-all cursor-pointer">
-              {uploading ? <><Upload size={16} className="animate-bounce" /> Uploading…</> : <><Camera size={16} /> Attach photo</>}
-              <input type="file" accept="image/*" capture="environment" className="hidden"
-                     onChange={handlePhotoUpload} disabled={uploading} />
-            </label>
-          </div>
+          {/* Photo upload disabled */}
         </div>
 
         {/* Action bar */}
@@ -649,16 +630,15 @@ export function CleanerView({ schedules, certifications, user }: CleanerViewProp
         </div>
       </div>
 
-      {/* Bottom Nav */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex items-center z-10">
+      {/* Bottom Nav — offset by sidebar width on desktop */}
+      <div className="fixed bottom-0 left-0 lg:left-[230px] right-0 bg-white border-t border-gray-100 flex items-center z-10">
         {[
           { icon: '📅', label: 'Schedule',  t: 'schedule'     },
           { icon: '📋', label: 'Tasks',     t: 'instructions' },
-          { icon: '🖼',  label: 'Photos',    t: null           },
           { icon: '👤', label: 'Profile',   t: 'profile'      },
         ].map(item => (
           <button key={item.label}
-                  onClick={() => item.t && setTab(item.t as any)}
+                  onClick={() => setTab(item.t as any)}
                   className={`flex-1 flex flex-col items-center gap-0.5 py-3 text-[10px] font-medium
                               transition-colors ${tab === item.t ? 'text-[var(--blue)]' : 'text-gray-400'}`}>
             <span className="text-xl leading-none">{item.icon}</span>

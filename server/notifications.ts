@@ -74,6 +74,18 @@ export async function notify(payload: NotifyPayload) {
   await Promise.allSettled(pushPromises)
 }
 
+/** Create an in-app notification for all managers/admins */
+export async function notifyManagersInApp(title: string, body: string) {
+  const managers = await prisma.user.findMany({
+    where:  { role: { in: ['SUPER_ADMIN', 'MANAGER'] }, isActive: true },
+    select: { id: true },
+  })
+  if (managers.length === 0) return
+  await prisma.notification.createMany({
+    data: managers.map(m => ({ userId: m.id, type: 'clock_event', title, body })),
+  })
+}
+
 /** Notify all managers of a critical event */
 export async function notifyManagers(title: string, body: string, url?: string) {
   const managers = await prisma.user.findMany({

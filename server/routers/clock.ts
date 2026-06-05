@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc'
 import { TRPCError } from '@trpc/server'
-import { sendSms } from '@/server/notifications'
+import { sendSms, notifyManagersInApp } from '@/server/notifications'
 import { format } from 'date-fns'
 
 const NOTIFY_PHONE = process.env.TWILIO_NOTIFY_PHONE ?? ''
@@ -79,10 +79,18 @@ export const clockRouter = createTRPCRouter({
         }),
       ])
 
-      // Send SMS notification (non-blocking)
+      // In-app notification for managers (non-blocking)
+      const cleaner = await prisma.user.findUnique({ where: { id: session.user.id }, select: { name: true } })
+      const cleanerName = cleaner?.name ?? 'Cleaner'
+      const clientName  = schedule?.client?.name ?? 'Unknown'
+      notifyManagersInApp(
+        `${cleanerName} clocked in`,
+        `${clientName} · ${format(new Date(), 'HH:mm')}`
+      ).catch(err => console.error('[Notification clock-in]', err))
+
+      // SMS (non-blocking, only if phone configured)
       if (NOTIFY_PHONE) {
-        const cleaner = await prisma.user.findUnique({ where: { id: session.user.id }, select: { name: true } })
-        buildClockSms('CLOCK_IN', cleaner?.name ?? 'Cleaner', schedule?.client?.name ?? '', input.lat, input.lng)
+        buildClockSms('CLOCK_IN', cleanerName, clientName, input.lat, input.lng)
           .then(msg => sendSms(NOTIFY_PHONE, msg))
           .catch(err => console.error('[SMS clock-in]', err))
       }
@@ -121,13 +129,21 @@ export const clockRouter = createTRPCRouter({
         },
       })
 
-      // Send SMS notification (non-blocking)
+      // In-app notification + SMS (non-blocking)
+      const [outCleaner, outSchedule] = await Promise.all([
+        prisma.user.findUnique({ where: { id: session.user.id }, select: { name: true } }),
+        prisma.schedule.findUnique({ where: { id: input.scheduleId }, include: { client: true } }),
+      ])
+      const outCleanerName = outCleaner?.name ?? 'Cleaner'
+      const outClientName  = outSchedule?.client?.name ?? 'Unknown'
+
+      notifyManagersInApp(
+        `${outCleanerName} clocked out`,
+        `${outClientName} · ${format(new Date(), 'HH:mm')}`
+      ).catch(err => console.error('[Notification clock-out]', err))
+
       if (NOTIFY_PHONE) {
-        const [cleaner, schedule] = await Promise.all([
-          prisma.user.findUnique({ where: { id: session.user.id }, select: { name: true } }),
-          prisma.schedule.findUnique({ where: { id: input.scheduleId }, include: { client: true } }),
-        ])
-        buildClockSms('CLOCK_OUT', cleaner?.name ?? 'Cleaner', schedule?.client?.name ?? '', input.lat, input.lng)
+        buildClockSms('CLOCK_OUT', outCleanerName, outClientName, input.lat, input.lng)
           .then(msg => sendSms(NOTIFY_PHONE, msg))
           .catch(err => console.error('[SMS clock-out]', err))
       }

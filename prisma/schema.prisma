@@ -69,6 +69,7 @@ model User {
   certifications UserCertification[]
   completionPhotos CompletionPhoto[]
   sessions       Session[]
+  notifications  Notification[]
 
   @@map("users")
 }
@@ -281,6 +282,24 @@ model PushSubscription {
 
   @@unique([userId, endpoint])
   @@map("push_subscriptions")
+}
+
+// ─── IN-APP NOTIFICATIONS ─────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([createdAt])
+  @@map("notifications")
 }
 
 // ─── NOTION SYNC LOG ──────────────────────────────
