@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { MapPin, Lock, Clock, Play, Square, CheckCircle, Camera, ChevronRight, X, Upload } from 'lucide-react'
+import { MapPin, Lock, Clock, Play, Square, CheckCircle, ChevronRight, X } from 'lucide-react'
 import { trpc } from '@/lib/trpc'
 import { getDaysUntilExpiry, formatDate, formatTime, initials } from '@/lib/utils'
 import { format } from 'date-fns'
@@ -136,8 +136,7 @@ function JobDetailModal({ scheduleId, cleanerName, cleanerId, onClose }: {
   cleanerId: string
   onClose: () => void
 }) {
-  const [uploading, setUploading]       = useState(false)
-  const [toast, setToast]               = useState<string | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
   const [gpsStatus, setGpsStatus]       = useState<'unknown' | 'ok' | 'denied' | 'getting'>('unknown')
 
   // Check permission on mount
@@ -187,25 +186,6 @@ function JobDetailModal({ scheduleId, cleanerName, cleanerId, onClose }: {
     })
   }
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploading(true)
-    try {
-      const res = await fetch('/api/uploads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fileName: file.name, contentType: file.type, scheduleId, type: 'completion' }),
-      })
-      const { presignedUrl } = await res.json()
-      await fetch(presignedUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } })
-      await refetch()
-    } finally {
-      setUploading(false)
-      e.target.value = ''
-    }
-  }
-
   if (!schedule) return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-white">
       <div className="text-gray-400 text-sm">Loading…</div>
@@ -215,7 +195,6 @@ function JobDetailModal({ scheduleId, cleanerName, cleanerId, onClose }: {
   const clockState = getClockState(schedule.clockEvents ?? [], cleanerId)
 
   const isCompleted = schedule.status === 'COMPLETED'
-  const photoCount  = schedule.completionPhotos?.length ?? 0
 
   const STATUS_COLORS: Record<string, string> = {
     IN_PROGRESS: 'bg-[var(--teal-pale)] text-[var(--teal)]',
@@ -523,20 +502,7 @@ export function CleanerView({ schedules, certifications, user }: CleanerViewProp
 
       {/* Content card */}
       <div className="flex-1 -mt-8 rounded-t-3xl bg-gray-50 flex flex-col">
-        {/* Tabs */}
-        <div className="bg-white rounded-t-3xl px-5 pt-4 pb-0 shadow-sm">
-          <div className="flex gap-1">
-            {(['schedule', 'instructions', 'profile'] as const).map(t => (
-              <button key={t} onClick={() => setTab(t)}
-                      className={`flex-1 py-2.5 text-xs font-semibold capitalize rounded-lg transition-all
-                                  ${tab === t ? 'bg-[var(--navy)] text-white' : 'text-gray-400 hover:text-gray-600'}`}>
-                {t}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-4 py-4 pb-24">
+        <div className="flex-1 overflow-y-auto px-4 pt-5 pb-24">
 
           {/* SCHEDULE */}
           {tab === 'schedule' && (
